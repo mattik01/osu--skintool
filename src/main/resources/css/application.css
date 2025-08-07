@@ -1,0 +1,304 @@
+/* osu! Skin Selection Tool - Application Styles */
+
+.root {
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 12px;
+    -fx-background-color: #f5f5f5;
+}
+
+/* Menu Bar */
+.menu-bar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* Tool Bar */
+.tool-bar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 5;
+}
+
+.tool-bar .button {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-padding: 6 12;
+}
+
+.tool-bar .button:hover {
+    -fx-background-color: #e9ecef;
+}
+
+.tool-bar .button:pressed {
+    -fx-background-color: #dee2e6;
+}
+
+.tool-bar .toggle-button {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-padding: 6 12;
+}
+
+.tool-bar .toggle-button:selected {
+    -fx-background-color: #007bff;
+    -fx-text-fill: white;
+}
+
+.tool-bar .text-field {
+    -fx-min-width: 200;
+    -fx-pref-width: 200;
+}
+
+/* List View */
+.list-view {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+}
+
+.list-view .list-cell {
+    -fx-padding: 8 12;
+    -fx-border-color: transparent transparent #f0f0f0 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.list-view .list-cell:selected {
+    -fx-background-color: #007bff;
+    -fx-text-fill: white;
+}
+
+.list-view .list-cell:hover {
+    -fx-background-color: #f8f9fa;
+}
+
+.list-view .list-cell:selected:hover {
+    -fx-background-color: #0056b3;
+}
+
+/* Details Panel */
+.details-header {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+.details-container {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+}
+
+.details-container .label {
+    -fx-text-fill: #555555;
+}
+
+/* Status Bar */
+.status-bar {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 5 10;
+}
+
+.status-bar .label {
+    -fx-text-fill: #666666;
+}
+
+/* Progress Bar */
+.progress-bar {
+    -fx-pref-width: 200;
+    -fx-pref-height: 20;
+}
+
+.progress-bar .bar {
+    -fx-background-color: #007bff;
+    -fx-background-radius: 2;
+    -fx-padding: 2;
+}
+
+.progress-bar .track {
+    -fx-background-color: #e9ecef;
+    -fx-background-radius: 2;
+}
+
+/* Buttons */
+.button {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 8 16;
+    -fx-text-fill: #495057;
+    -fx-font-weight: normal;
+}
+
+.button:hover {
+    -fx-background-color: #e9ecef;
+    -fx-border-color: #adb5bd;
+}
+
+.button:pressed {
+    -fx-background-color: #dee2e6;
+}
+
+.button:focused {
+    -fx-border-color: #80bdff;
+    -fx-background-color: #e9ecef;
+}
+
+/* Primary Button */
+.button.primary {
+    -fx-background-color: #007bff;
+    -fx-border-color: #007bff;
+    -fx-text-fill: white;
+}
+
+.button.primary:hover {
+    -fx-background-color: #0056b3;
+    -fx-border-color: #0056b3;
+}
+
+.button.primary:pressed {
+    -fx-background-color: #004085;
+    -fx-border-color: #004085;
+}
+
+/* Success Button */
+.button.success {
+    -fx-background-color: #28a745;
+    -fx-border-color: #28a745;
+    -fx-text-fill: white;
+}
+
+.button.success:hover {
+    -fx-background-color: #1e7e34;
+    -fx-border-color: #1e7e34;
+}
+
+/* Danger Button */
+.button.danger {
+    -fx-background-color: #dc3545;
+    -fx-border-color: #dc3545;
+    -fx-text-fill: white;
+}
+
+.button.danger:hover {
+    -fx-background-color: #bd2130;
+    -fx-border-color: #bd2130;
+}
+
+/* Text Fields */
+.text-field {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #ced4da;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 6 12;
+}
+
+.text-field:focused {
+    -fx-border-color: #80bdff;
+    -fx-background-color: #ffffff;
+}
+
+/* Combo Box */
+.combo-box {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #ced4da;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.combo-box:focused {
+    -fx-border-color: #80bdff;
+}
+
+/* Split Pane */
+.split-pane {
+    -fx-background-color: transparent;
+}
+
+.split-pane .split-pane-divider {
+    -fx-background-color: #e0e0e0;
+    -fx-padding: 0 1 0 1;
+}
+
+/* Scroll Pane */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .corner {
+    -fx-background-color: #f8f9fa;
+}
+
+/* Scroll Bar */
+.scroll-bar {
+    -fx-background-color: #f8f9fa;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #ced4da;
+    -fx-background-radius: 8;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #adb5bd;
+}
+
+.scroll-bar .track {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-background-color: #6c757d;
+}
+
+/* Alerts and Dialogs */
+.alert .header-panel {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #dee2e6;
+}
+
+.alert .content {
+    -fx-background-color: #ffffff;
+}
+
+/* Special Classes */
+.skin-list-item {
+    -fx-padding: 10;
+}
+
+.skin-thumbnail {
+    -fx-fit-width: 64;
+    -fx-fit-height: 64;
+    -fx-preserve-ratio: true;
+    -fx-smooth: true;
+}
+
+.favorite-star {
+    -fx-text-fill: #ffc107;
+    -fx-font-size: 16px;
+}
+
+.element-count {
+    -fx-text-fill: #6c757d;
+    -fx-font-size: 11px;
+}

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.osuskin.tool.controller.MainController">
+   <top>
+      <VBox BorderPane.alignment="CENTER">
+         <children>
+            <MenuBar>
+              <menus>
+                <Menu mnemonicParsing="false" text="File">
+                  <items>
+                    <MenuItem fx:id="menuSelectDirectory" mnemonicParsing="false" onAction="#onSelectDirectory" text="Select osu! Skins Directory..." />
+                        <SeparatorMenuItem />
+                        <MenuItem fx:id="menuRefreshSkins" mnemonicParsing="false" onAction="#onRefreshSkins" text="Refresh Skins" />
+                        <SeparatorMenuItem />
+                        <MenuItem fx:id="menuExportConfig" mnemonicParsing="false" onAction="#onExportConfig" text="Export Configuration..." />
+                        <MenuItem fx:id="menuImportConfig" mnemonicParsing="false" onAction="#onImportConfig" text="Import Configuration..." />
+                        <SeparatorMenuItem />
+                        <MenuItem fx:id="menuExit" mnemonicParsing="false" onAction="#onExit" text="Exit" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="View">
+                  <items>
+                        <CheckMenuItem fx:id="menuShowFavorites" mnemonicParsing="false" onAction="#onToggleFavorites" text="Show Favorites Only" />
+                        <SeparatorMenuItem />
+                        <MenuItem fx:id="menuSettings" mnemonicParsing="false" onAction="#onSettings" text="Settings..." />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Tools">
+                  <items>
+                        <MenuItem fx:id="menuOpenSkinContainer" mnemonicParsing="false" onAction="#onOpenSkinContainer" text="Open Skin Container" />
+                        <MenuItem fx:id="menuClearCache" mnemonicParsing="false" onAction="#onClearCache" text="Clear Cache" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Help">
+                  <items>
+                    <MenuItem fx:id="menuAbout" mnemonicParsing="false" onAction="#onAbout" text="About" />
+                  </items>
+                </Menu>
+              </menus>
+            </MenuBar>
+            <ToolBar prefHeight="40.0" prefWidth="200.0">
+              <items>
+                  <Button fx:id="btnSelectDirectory" mnemonicParsing="false" onAction="#onSelectDirectory" text="Select Directory" />
+                  <Separator orientation="VERTICAL" />
+                  <Button fx:id="btnRefresh" mnemonicParsing="false" onAction="#onRefreshSkins" text="Refresh" />
+                  <Separator orientation="VERTICAL" />
+                  <TextField fx:id="txtSearch" promptText="Search skins..." />
+                  <Button fx:id="btnClearSearch" mnemonicParsing="false" onAction="#onClearSearch" text="✕" />
+                  <Separator orientation="VERTICAL" />
+                  <ToggleButton fx:id="btnFavorites" mnemonicParsing="false" onAction="#onToggleFavorites" text="★ Favorites" />
+              </items>
+            </ToolBar>
+         </children>
+      </VBox>
+   </top>
+   <center>
+      <SplitPane dividerPositions="0.7" prefHeight="160.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <items>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+               <children>
+                  <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <Label text="Skins:" />
+                              <Label fx:id="lblSkinCount" text="0" />
+                              <Region HBox.hgrow="ALWAYS" />
+                              <ComboBox fx:id="cmbSortBy" prefWidth="120.0" promptText="Sort by..." />
+                              <Button fx:id="btnGridView" mnemonicParsing="false" onAction="#onToggleView" text="Grid" />
+                           </children>
+                           <padding>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </padding>
+                        </HBox>
+                        <ListView fx:id="listSkins" onMouseClicked="#onSkinSelected" VBox.vgrow="ALWAYS">
+                           <VBox.margin>
+                              <Insets left="5.0" right="5.0" />
+                           </VBox.margin>
+                        </ListView>
+                     </children>
+                  </VBox>
+               </children>
+            </AnchorPane>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+               <children>
+                  <VBox fx:id="skinDetailsPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <Label text="Skin Details" styleClass="details-header">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+                           <content>
+                              <VBox fx:id="detailsContainer" spacing="10.0">
+                                 <padding>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </padding>
+                                 <children>
+                                    <Label fx:id="lblNoSelection" text="Select a skin to view details" wrapText="true" />
+                                 </children>
+                              </VBox>
+                           </content>
+                        </ScrollPane>
+                     </children>
+                  </VBox>
+               </children>
+            </AnchorPane>
+        </items>
+      </SplitPane>
+   </center>
+   <bottom>
+      <VBox BorderPane.alignment="CENTER">
+         <children>
+            <Separator prefWidth="200.0" />
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                  <Label fx:id="lblStatus" text="Ready" />
+                  <Region HBox.hgrow="ALWAYS" />
+                  <ProgressBar fx:id="progressBar" prefWidth="200.0" visible="false" />
+                  <Label fx:id="lblDirectory" text="No directory selected" />
+               </children>
+               <padding>
+                  <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
+               </padding>
+            </HBox>
+         </children>
+      </VBox>
+   </bottom>
+</BorderPane>
