@@ -3,9 +3,10 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.osuskin.tool.controller.MainController">
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.osuskin.tool.controller.MainController" prefWidth="1400" prefHeight="800">
    <top>
       <VBox BorderPane.alignment="CENTER">
          <children>
@@ -13,27 +14,14 @@
               <menus>
                 <Menu mnemonicParsing="false" text="File">
                   <items>
-                    <MenuItem fx:id="menuSelectDirectory" mnemonicParsing="false" onAction="#onSelectDirectory" text="Select osu! Skins Directory..." />
-                        <SeparatorMenuItem />
-                        <MenuItem fx:id="menuRefreshSkins" mnemonicParsing="false" onAction="#onRefreshSkins" text="Refresh Skins" />
-                        <SeparatorMenuItem />
-                        <MenuItem fx:id="menuExportConfig" mnemonicParsing="false" onAction="#onExportConfig" text="Export Configuration..." />
-                        <MenuItem fx:id="menuImportConfig" mnemonicParsing="false" onAction="#onImportConfig" text="Import Configuration..." />
+                        <MenuItem fx:id="menuSelectDirectory" mnemonicParsing="false" onAction="#onSelectDirectory" text="Set Skin Directory..." />
                         <SeparatorMenuItem />
                         <MenuItem fx:id="menuExit" mnemonicParsing="false" onAction="#onExit" text="Exit" />
-                  </items>
-                </Menu>
-                <Menu mnemonicParsing="false" text="View">
-                  <items>
-                        <CheckMenuItem fx:id="menuShowFavorites" mnemonicParsing="false" onAction="#onToggleFavorites" text="Show Favorites Only" />
-                        <SeparatorMenuItem />
-                        <MenuItem fx:id="menuSettings" mnemonicParsing="false" onAction="#onSettings" text="Settings..." />
                   </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Tools">
                   <items>
                         <MenuItem fx:id="menuOpenSkinContainer" mnemonicParsing="false" onAction="#onOpenSkinContainer" text="Open Skin Container" />
-                        <MenuItem fx:id="menuClearCache" mnemonicParsing="false" onAction="#onClearCache" text="Clear Cache" />
                   </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">
@@ -43,23 +31,11 @@
                 </Menu>
               </menus>
             </MenuBar>
-            <ToolBar prefHeight="40.0" prefWidth="200.0">
-              <items>
-                  <Button fx:id="btnSelectDirectory" mnemonicParsing="false" onAction="#onSelectDirectory" text="Select Directory" />
-                  <Separator orientation="VERTICAL" />
-                  <Button fx:id="btnRefresh" mnemonicParsing="false" onAction="#onRefreshSkins" text="Refresh" />
-                  <Separator orientation="VERTICAL" />
-                  <TextField fx:id="txtSearch" promptText="Search skins..." />
-                  <Button fx:id="btnClearSearch" mnemonicParsing="false" onAction="#onClearSearch" text="✕" />
-                  <Separator orientation="VERTICAL" />
-                  <ToggleButton fx:id="btnFavorites" mnemonicParsing="false" onAction="#onToggleFavorites" text="★ Favorites" />
-              </items>
-            </ToolBar>
          </children>
       </VBox>
    </top>
    <center>
-      <SplitPane dividerPositions="0.7" prefHeight="160.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <SplitPane dividerPositions="0.55" prefHeight="160.0" prefWidth="200.0" BorderPane.alignment="CENTER">
         <items>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                <children>
@@ -69,9 +45,17 @@
                            <children>
                               <Label text="Skins:" />
                               <Label fx:id="lblSkinCount" text="0" />
+                              <Button fx:id="btnRefresh" mnemonicParsing="false" onAction="#onRefreshSkins" text="↻" styleClass="icon-button">
+                                 <tooltip>
+                                    <Tooltip text="Refresh skin list" />
+                                 </tooltip>
+                              </Button>
+                              <Label fx:id="lblCompressedCount" text="" />
+                              <Button fx:id="btnExtract" mnemonicParsing="false" onAction="#onExtractCompressed" text="Extract" visible="false" />
+                              <Separator orientation="VERTICAL" />
+                              <TextField fx:id="txtSearch" promptText="Search skins..." prefWidth="200.0" />
                               <Region HBox.hgrow="ALWAYS" />
                               <ComboBox fx:id="cmbSortBy" prefWidth="120.0" promptText="Sort by..." />
-                              <Button fx:id="btnGridView" mnemonicParsing="false" onAction="#onToggleView" text="Grid" />
                            </children>
                            <padding>
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -90,26 +74,87 @@
                <children>
                   <VBox fx:id="skinDetailsPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
-                        <Label text="Skin Details" styleClass="details-header">
-                           <font>
-                              <Font name="System Bold" size="14.0" />
-                           </font>
-                           <VBox.margin>
-                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                           </VBox.margin>
-                        </Label>
-                        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
-                           <content>
-                              <VBox fx:id="detailsContainer" spacing="10.0">
-                                 <padding>
-                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                 </padding>
+                        <!-- Skin Name Header -->
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <Label fx:id="lblSkinName" text="Skin Preview" styleClass="details-header">
+                                 <font>
+                                    <Font name="System Bold" size="14.0" />
+                                 </font>
+                              </Label>
+                              <Region HBox.hgrow="ALWAYS" />
+                              <Label fx:id="lblElementInfo" text="" styleClass="element-info" />
+                           </children>
+                           <padding>
+                              <Insets bottom="5.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </HBox>
+                        
+                        <Separator />
+                        
+                        <!-- Audio Controls -->
+                        <VBox spacing="5.0" styleClass="audio-controls">
+                           <children>
+                              <Label text="Audio Preview" styleClass="section-title" />
+                              
+                              <!-- Volume Control -->
+                              <HBox alignment="CENTER_LEFT" spacing="10.0">
                                  <children>
-                                    <Label fx:id="lblNoSelection" text="Select a skin to view details" wrapText="true" />
+                                    <Label text="Volume:" minWidth="50" />
+                                    <Slider fx:id="volumeSlider" min="0" max="100" value="50" 
+                                            showTickLabels="false" showTickMarks="false" 
+                                            prefWidth="150" HBox.hgrow="ALWAYS" />
+                                    <Label fx:id="lblVolume" text="50%" minWidth="35" />
                                  </children>
-                              </VBox>
-                           </content>
-                        </ScrollPane>
+                              </HBox>
+                              
+                              <!-- Sound Buttons -->
+                              <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                 <children>
+                                    <Button fx:id="btnPlayHitsounds" text="Hitsounds" 
+                                            onAction="#onPlayHitsounds" prefWidth="90" />
+                                    <Button fx:id="btnPlayMisc" text="Misc" 
+                                            onAction="#onPlayMiscSounds" prefWidth="60" />
+                                    <Button fx:id="btnStopAudio" text="Stop" 
+                                            onAction="#onStopAudio" prefWidth="50" />
+                                 </children>
+                              </HBox>
+                              
+                              <!-- Currently Playing -->
+                              <Label fx:id="lblNowPlaying" text="Nothing playing" styleClass="now-playing" />
+                           </children>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
+                           </padding>
+                        </VBox>
+                        
+                        <Separator />
+                        
+                        <!-- Gameplay Preview Canvas -->
+                        <VBox fx:id="previewContainer" VBox.vgrow="ALWAYS" spacing="5.0">
+                           <children>
+                              <Label text="Visual Preview" styleClass="section-title" />
+                              
+                              <!-- Canvas Container -->
+                              <StackPane VBox.vgrow="ALWAYS" styleClass="canvas-container">
+                                 <children>
+                                    <!-- Placeholder when no skin selected -->
+                                    <VBox fx:id="placeholderContainer" alignment="CENTER" spacing="10">
+                                       <children>
+                                          <Label text="🎮" style="-fx-font-size: 48px; -fx-text-fill: #cccccc;" />
+                                          <Label text="Select a skin to preview" style="-fx-text-fill: #999999;" />
+                                       </children>
+                                    </VBox>
+                                    <!-- Gameplay canvas (hidden initially) -->
+                                    <Canvas fx:id="gameplayCanvas" width="600" height="450" visible="false" />
+                                 </children>
+                              </StackPane>
+                           </children>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
+                           </padding>
+                        </VBox>
+                        
                      </children>
                   </VBox>
                </children>

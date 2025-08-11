@@ -47,12 +47,13 @@ public class Skin {
     @JsonProperty("tags")
     private Set<String> tags;
     
-    @JsonProperty("favorite")
-    private boolean favorite;
+    @JsonProperty("comboColors")
+    private List<int[]> comboColors;  // RGB values for each combo color
     
     public Skin() {
         this.elements = new HashMap<>();
         this.tags = new HashSet<>();
+        this.comboColors = new ArrayList<>();
     }
     
     public Skin(String name, Path directoryPath) {
@@ -234,14 +235,6 @@ public class Skin {
         return tag != null && this.tags.contains(tag.trim().toLowerCase());
     }
     
-    public boolean isFavorite() {
-        return favorite;
-    }
-    
-    public void setFavorite(boolean favorite) {
-        this.favorite = favorite;
-    }
-    
     public String getDisplayInfo() {
         StringBuilder info = new StringBuilder(name);
         if (author != null && !author.trim().isEmpty()) {
@@ -285,6 +278,21 @@ public class Skin {
         return Objects.hash(name, directoryPath);
     }
     
+    public List<int[]> getComboColors() {
+        return comboColors;
+    }
+    
+    public void setComboColors(List<int[]> comboColors) {
+        this.comboColors = comboColors;
+    }
+    
+    public void addComboColor(int r, int g, int b) {
+        if (comboColors == null) {
+            comboColors = new ArrayList<>();
+        }
+        comboColors.add(new int[]{r, g, b});
+    }
+    
     @Override
     public String toString() {
         return "Skin{" +
@@ -292,7 +300,6 @@ public class Skin {
                ", author='" + author + '\'' +
                ", elementCount=" + getElementCount() +
                ", totalSize=" + getFormattedTotalSize() +
-               ", favorite=" + favorite +
                '}';
     }
 }

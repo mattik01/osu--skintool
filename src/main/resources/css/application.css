@@ -281,6 +281,32 @@
     -fx-background-color: #ffffff;
 }
 
+/* Icon Buttons */
+.icon-button {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 4 8;
+    -fx-font-family: "Segoe UI Symbol", "DejaVu Sans", "Symbola", sans-serif;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-min-width: 32;
+    -fx-pref-width: 32;
+    -fx-min-height: 26;
+    -fx-pref-height: 26;
+    -fx-text-fill: #495057;
+}
+
+.icon-button:hover {
+    -fx-background-color: #e9ecef;
+    -fx-border-color: #adb5bd;
+}
+
+.icon-button:pressed {
+    -fx-background-color: #dee2e6;
+}
+
 /* Special Classes */
 .skin-list-item {
     -fx-padding: 10;
@@ -291,11 +317,6 @@
     -fx-fit-height: 64;
     -fx-preserve-ratio: true;
     -fx-smooth: true;
-}
-
-.favorite-star {
-    -fx-text-fill: #ffc107;
-    -fx-font-size: 16px;
 }
 
 .element-count {

@@ -53,8 +53,10 @@ public class OsuSkinToolApplication extends Application {
             // Configure stage
             primaryStage.setTitle(APP_TITLE);
             primaryStage.setScene(scene);
-            primaryStage.setMinWidth(800);
+            primaryStage.setMinWidth(1000);
             primaryStage.setMinHeight(600);
+            primaryStage.setWidth(1200);
+            primaryStage.setHeight(700);
             
             // Set application icon (if available)
             try {

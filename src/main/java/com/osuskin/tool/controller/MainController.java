@@ -1,8 +1,12 @@
 package com.osuskin.tool.controller;
 
+import com.osuskin.tool.controller.SkinPreviewController;
 import com.osuskin.tool.model.Configuration;
 import com.osuskin.tool.model.Skin;
 import com.osuskin.tool.service.SkinScannerService;
+import com.osuskin.tool.service.SkinElementLoader;
+import com.osuskin.tool.view.SimpleGameplayRenderer;
+import com.osuskin.tool.view.gameplay.GameplayRenderer;
 import com.osuskin.tool.util.ConfigurationManager;
 import com.osuskin.tool.util.OsuPathDetector;
 import javafx.application.Platform;
@@ -16,9 +20,19 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.animation.AnimationTimer;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.Modality;
+import javafx.scene.Scene;
+import javafx.scene.Parent;
+import javafx.fxml.FXMLLoader;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,9 +41,11 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Predicate;
+import java.util.concurrent.CompletableFuture;
 
 public class MainController implements Initializable {
     
@@ -37,33 +53,38 @@ public class MainController implements Initializable {
     
     // Menu items
     @FXML private MenuItem menuSelectDirectory;
-    @FXML private MenuItem menuRefreshSkins;
-    @FXML private MenuItem menuExportConfig;
-    @FXML private MenuItem menuImportConfig;
     @FXML private MenuItem menuExit;
-    @FXML private CheckMenuItem menuShowFavorites;
-    @FXML private MenuItem menuSettings;
     @FXML private MenuItem menuOpenSkinContainer;
-    @FXML private MenuItem menuClearCache;
     @FXML private MenuItem menuAbout;
     
     // Toolbar components
-    @FXML private Button btnSelectDirectory;
     @FXML private Button btnRefresh;
     @FXML private TextField txtSearch;
-    @FXML private Button btnClearSearch;
-    @FXML private ToggleButton btnFavorites;
     
     // Main content
     @FXML private ListView<Skin> listSkins;
     @FXML private Label lblSkinCount;
+    @FXML private Label lblCompressedCount;
+    @FXML private Button btnExtract;
     @FXML private ComboBox<String> cmbSortBy;
-    @FXML private Button btnGridView;
     
     // Details panel
     @FXML private VBox skinDetailsPane;
-    @FXML private VBox detailsContainer;
-    @FXML private Label lblNoSelection;
+    @FXML private Label lblSkinName;
+    @FXML private Label lblElementInfo;
+    @FXML private VBox previewContainer;
+    @FXML private VBox placeholderContainer;
+    
+    // Audio Controls
+    @FXML private Slider volumeSlider;
+    @FXML private Label lblVolume;
+    @FXML private Button btnPlayHitsounds;
+    @FXML private Button btnPlayMisc;
+    @FXML private Button btnStopAudio;
+    @FXML private Label lblNowPlaying;
+    
+    // Gameplay Preview
+    @FXML private Canvas gameplayCanvas;
     
     // Status bar
     @FXML private Label lblStatus;
@@ -76,6 +97,17 @@ public class MainController implements Initializable {
     private ObservableList<Skin> allSkins;
     private FilteredList<Skin> filteredSkins;
     private SortedList<Skin> sortedSkins;
+    
+    // Preview components
+    private SkinElementLoader elementLoader;
+    private SimpleGameplayRenderer simpleRenderer;
+    private GameplayRenderer enhancedRenderer;
+    private boolean useEnhancedRenderer = true; // Toggle for renderer type
+    private MediaPlayer currentAudioPlayer;
+    private List<MediaPlayer> hitsoundPlayers = new ArrayList<>();
+    private AnimationTimer animationTimer;
+    private boolean isAnimating = false;
+    private Skin currentPreviewSkin;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -95,20 +127,9 @@ public class MainController implements Initializable {
             updateFilter();
         });
         
-        // Set up favorites toggle
-        btnFavorites.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            menuShowFavorites.setSelected(newValue);
-            updateFilter();
-        });
-        
-        menuShowFavorites.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            btnFavorites.setSelected(newValue);
-            updateFilter();
-        });
-        
         // Set up sort options
         cmbSortBy.setItems(FXCollections.observableArrayList(
-            "Name (A-Z)", "Name (Z-A)", "Date Modified", "File Count", "Size", "Favorites First"
+            "Name (A-Z)", "Name (Z-A)", "File Count", "Size"
         ));
         cmbSortBy.setValue("Name (A-Z)");
         cmbSortBy.valueProperty().addListener((observable, oldValue, newValue) -> {
@@ -117,6 +138,15 @@ public class MainController implements Initializable {
         
         // Initially disable controls that require a directory
         updateControlsState(false);
+        
+        // Setup preview controls
+        setupPreviewControls();
+        
+        // Setup canvas resize listener
+        setupCanvasResizeListener();
+        
+        // Initially hide preview controls
+        hidePreviewControls();
         
         logger.info("MainController initialization completed");
     }
@@ -183,7 +213,7 @@ public class MainController implements Initializable {
             logger.info("Set initial directory for chooser: {}", initialDir);
         }
         
-        Stage stage = (Stage) btnSelectDirectory.getScene().getWindow();
+        Stage stage = (Stage) btnRefresh.getScene().getWindow();
         File selectedDirectory = directoryChooser.showDialog(stage);
         
         if (selectedDirectory != null) {
@@ -220,32 +250,13 @@ public class MainController implements Initializable {
         startSkinScan();
     }
     
-    @FXML
-    private void onClearSearch() {
-        txtSearch.clear();
-    }
     
-    @FXML
-    private void onToggleFavorites() {
-        updateFilter();
-    }
-    
-    @FXML
-    private void onToggleView() {
-        // TODO: Implement grid view toggle
-        logger.info("Grid view toggle requested (not yet implemented)");
-    }
     
     @FXML
     private void onSkinSelected(MouseEvent event) {
         Skin selectedSkin = listSkins.getSelectionModel().getSelectedItem();
         if (selectedSkin != null) {
-            displaySkinDetails(selectedSkin);
-            
-            // Double-click to open preview
-            if (event.getClickCount() == 2) {
-                openSkinPreview(selectedSkin);
-            }
+            displaySkinPreview(selectedSkin);
         }
     }
     
@@ -295,7 +306,7 @@ public class MainController implements Initializable {
         );
         fileChooser.setInitialFileName("osu-skintool-config.json");
         
-        Stage stage = (Stage) btnSelectDirectory.getScene().getWindow();
+        Stage stage = (Stage) btnRefresh.getScene().getWindow();
         File selectedFile = fileChooser.showSaveDialog(stage);
         
         if (selectedFile != null) {
@@ -317,7 +328,7 @@ public class MainController implements Initializable {
             new FileChooser.ExtensionFilter("JSON Files", "*.json")
         );
         
-        Stage stage = (Stage) btnSelectDirectory.getScene().getWindow();
+        Stage stage = (Stage) btnRefresh.getScene().getWindow();
         File selectedFile = fileChooser.showOpenDialog(stage);
         
         if (selectedFile != null) {
@@ -354,6 +365,7 @@ public class MainController implements Initializable {
         
         lblStatus.setText("Scanning skins...");
         progressBar.setVisible(true);
+        progressBar.progressProperty().unbind(); // Unbind any existing binding
         progressBar.setProgress(-1); // Indeterminate progress
         
         Task<List<Skin>> scanTask = skinScannerService.createScanTask();
@@ -382,13 +394,11 @@ public class MainController implements Initializable {
     
     private void updateControlsState(boolean hasDirectory) {
         btnRefresh.setDisable(!hasDirectory);
-        menuRefreshSkins.setDisable(!hasDirectory);
         menuOpenSkinContainer.setDisable(!hasDirectory);
     }
     
     private void updateFilter() {
         String searchText = txtSearch.getText();
-        boolean showFavoritesOnly = btnFavorites.isSelected();
         
         Predicate<Skin> filter = skin -> {
             // Search filter
@@ -398,11 +408,6 @@ public class MainController implements Initializable {
                     (skin.getAuthor() == null || !skin.getAuthor().toLowerCase().contains(lowerCaseFilter))) {
                     return false;
                 }
-            }
-            
-            // Favorites filter
-            if (showFavoritesOnly && !skin.isFavorite()) {
-                return false;
             }
             
             return true;
@@ -419,11 +424,8 @@ public class MainController implements Initializable {
         Comparator<Skin> comparator = switch (sortBy) {
             case "Name (A-Z)" -> Comparator.comparing(Skin::getName, String.CASE_INSENSITIVE_ORDER);
             case "Name (Z-A)" -> Comparator.comparing(Skin::getName, String.CASE_INSENSITIVE_ORDER).reversed();
-            case "Date Modified" -> Comparator.comparing(Skin::getLastModified, Comparator.nullsLast(Comparator.naturalOrder())).reversed();
             case "File Count" -> Comparator.comparing(Skin::getFileCount).reversed();
             case "Size" -> Comparator.comparing(Skin::getTotalSize).reversed();
-            case "Favorites First" -> Comparator.comparing(Skin::isFavorite).reversed()
-                    .thenComparing(Skin::getName, String.CASE_INSENSITIVE_ORDER);
             default -> Comparator.comparing(Skin::getName, String.CASE_INSENSITIVE_ORDER);
         };
         
@@ -432,46 +434,310 @@ public class MainController implements Initializable {
     
     private void updateSkinCount() {
         lblSkinCount.setText(String.valueOf(filteredSkins.size()));
+        
+        // Update compressed count and extract button
+        int compressedCount = skinScannerService.getCompressedSkinCount();
+        if (compressedCount > 0) {
+            lblCompressedCount.setText("(" + compressedCount + " compressed)");
+            lblCompressedCount.setVisible(true);
+            btnExtract.setVisible(true);
+        } else {
+            lblCompressedCount.setVisible(false);
+            btnExtract.setVisible(false);
+        }
     }
     
-    private void displaySkinDetails(Skin skin) {
-        // Clear existing details
-        detailsContainer.getChildren().clear();
-        
-        // Add skin information
-        addDetailLabel("Name", skin.getName());
-        if (skin.getAuthor() != null) {
-            addDetailLabel("Author", skin.getAuthor());
+    private void setupPreviewControls() {
+        // Setup volume slider
+        if (volumeSlider != null) {
+            volumeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+                double volume = newVal.doubleValue();
+                lblVolume.setText(String.format("%.0f%%", volume));
+                updateAudioVolume(volume / 100.0);
+            });
         }
-        if (skin.getVersion() != null) {
-            addDetailLabel("Version", skin.getVersion());
-        }
-        addDetailLabel("Elements", skin.getElementCount() + " items");
-        addDetailLabel("Images", skin.getImageElementCount() + " files");
-        addDetailLabel("Audio", skin.getAudioElementCount() + " files");
-        addDetailLabel("Total Size", skin.getFormattedTotalSize());
-        if (skin.getLastModified() != null) {
-            addDetailLabel("Modified", skin.getLastModified().toString());
-        }
-        
-        // Add preview button
-        Button btnPreview = new Button("Open Preview");
-        btnPreview.setOnAction(e -> openSkinPreview(skin));
-        detailsContainer.getChildren().add(btnPreview);
     }
     
-    private void addDetailLabel(String title, String value) {
-        Label titleLabel = new Label(title + ":");
-        titleLabel.setStyle("-fx-font-weight: bold;");
-        Label valueLabel = new Label(value);
-        valueLabel.setWrapText(true);
-        
-        detailsContainer.getChildren().addAll(titleLabel, valueLabel);
+    private void setupCanvasResizeListener() {
+        if (gameplayCanvas != null) {
+            // Listen for canvas size changes
+            gameplayCanvas.widthProperty().addListener((obs, oldVal, newVal) -> {
+                if (enhancedRenderer != null) {
+                    enhancedRenderer.onCanvasResize();
+                }
+            });
+            
+            gameplayCanvas.heightProperty().addListener((obs, oldVal, newVal) -> {
+                if (enhancedRenderer != null) {
+                    enhancedRenderer.onCanvasResize();
+                }
+            });
+        }
     }
     
-    private void openSkinPreview(Skin skin) {
-        // TODO: Implement preview window
-        logger.info("Opening preview for skin: {}", skin.getName());
+    private void hidePreviewControls() {
+        // Show placeholder, hide canvas
+        if (placeholderContainer != null) {
+            placeholderContainer.setVisible(true);
+        }
+        if (gameplayCanvas != null) {
+            gameplayCanvas.setVisible(false);
+        }
+        // Hide audio controls
+        if (volumeSlider != null && volumeSlider.getParent() != null) {
+            volumeSlider.getParent().getParent().setVisible(false);
+        }
+    }
+    
+    private void showPreviewControls() {
+        // Hide placeholder, show canvas
+        if (placeholderContainer != null) {
+            placeholderContainer.setVisible(false);
+        }
+        if (gameplayCanvas != null) {
+            gameplayCanvas.setVisible(true);
+        }
+        // Show audio controls
+        if (volumeSlider != null && volumeSlider.getParent() != null) {
+            volumeSlider.getParent().getParent().setVisible(true);
+        }
+    }
+    
+    private void displaySkinPreview(Skin skin) {
+        currentPreviewSkin = skin;
+        
+        // Update skin name
+        lblSkinName.setText(skin.getName());
+        
+        // Show preview controls
+        showPreviewControls();
+        
+        // Stop any current animations/audio
+        stopCurrentPreview();
+        
+        // Initialize element loader for this skin
+        Path skinPath = skin.getDirectoryPathAsPath();
+        elementLoader = new SkinElementLoader(skinPath);
+        elementLoader.setCurrentSkin(skin);  // Pass skin for combo colors
+        
+        // Initialize appropriate renderer based on setting
+        if (useEnhancedRenderer) {
+            enhancedRenderer = new GameplayRenderer(gameplayCanvas, elementLoader);
+        } else {
+            simpleRenderer = new SimpleGameplayRenderer(gameplayCanvas, elementLoader);
+        }
+        
+        // Load elements asynchronously
+        CompletableFuture.runAsync(() -> {
+            preloadGameplayElements();
+            preloadAudioElements();
+            
+            Platform.runLater(() -> {
+                // Update element info
+                updateElementInfo();
+                
+                // Initialize and start autoplay animation
+                if (useEnhancedRenderer) {
+                    enhancedRenderer.initialize();
+                } else {
+                    simpleRenderer.initialize();
+                }
+                startAutoplayAnimation();
+            });
+        });
+    }
+    
+    private void preloadGameplayElements() {
+        if (elementLoader == null) return;
+        
+        // Preload hit circle elements
+        elementLoader.loadImage("hitcircle");
+        elementLoader.loadImage("hitcircleoverlay");
+        elementLoader.loadImage("approachcircle");
+        
+        // Preload slider elements
+        elementLoader.loadAnimation("sliderb");
+        elementLoader.loadImage("sliderfollowcircle");
+        elementLoader.loadImage("reversearrow");
+        
+        // Preload cursor
+        elementLoader.loadImage("cursor");
+        elementLoader.loadImage("cursortrail");
+        
+        // Preload hit bursts and lighting
+        elementLoader.loadAnimation("hit300");
+        elementLoader.loadAnimation("hit100");
+        elementLoader.loadAnimation("hit50");
+        elementLoader.loadAnimation("hit0");  // Miss animation
+        elementLoader.loadImage("lighting");
+        
+        // Preload numbers for combo display
+        for (int i = 0; i < 10; i++) {
+            elementLoader.loadImage("default-" + i);
+        }
+    }
+    
+    private void preloadAudioElements() {
+        if (elementLoader == null) return;
+        
+        // Preload common hitsounds
+        elementLoader.loadAudio("normal-hitnormal");
+        elementLoader.loadAudio("normal-hitclap");
+        elementLoader.loadAudio("normal-hitwhistle");
+        elementLoader.loadAudio("normal-hitfinish");
+        
+        elementLoader.loadAudio("soft-hitnormal");
+        elementLoader.loadAudio("soft-hitclap");
+        
+        // Preload misc sounds
+        elementLoader.loadAudio("applause");
+        elementLoader.loadAudio("failsound");
+        elementLoader.loadAudio("sectionpass");
+        elementLoader.loadAudio("combobreak");
+    }
+    
+    private void updateElementInfo() {
+        if (elementLoader == null) return;
+        
+        SkinElementLoader.SkinElementStats stats = elementLoader.getElementStats();
+        
+        int totalElements = stats.elementsByCategory.values().stream()
+            .mapToInt(Integer::intValue).sum();
+        
+        int missingRequired = stats.totalRequiredElements - stats.presentRequiredElements;
+        
+        lblElementInfo.setText(String.format("Elements: %d | Missing: %d", totalElements, missingRequired));
+    }
+    
+    @FXML
+    private void onPlayHitsounds() {
+        stopCurrentAudio();
+        lblNowPlaying.setText("Playing: Hitsounds");
+        
+        String[] hitsoundSequence = {
+            "normal-hitnormal", "normal-hitclap", "normal-hitwhistle", "normal-hitfinish",
+            "soft-hitnormal", "soft-hitclap"
+        };
+        
+        playAudioSequence(hitsoundSequence, 200);
+    }
+    
+    @FXML
+    private void onPlayMiscSounds() {
+        stopCurrentAudio();
+        lblNowPlaying.setText("Playing: Misc Sounds");
+        
+        String[] miscSequence = {
+            "sectionpass", "combobreak", "applause", "failsound"
+        };
+        
+        playAudioSequence(miscSequence, 500);
+    }
+    
+    @FXML
+    private void onStopAudio() {
+        stopCurrentAudio();
+        lblNowPlaying.setText("Nothing playing");
+    }
+    
+    private void playAudioSequence(String[] soundNames, int delayMs) {
+        if (elementLoader == null) return;
+        
+        CompletableFuture.runAsync(() -> {
+            for (String soundName : soundNames) {
+                Media sound = elementLoader.loadAudio(soundName);
+                if (sound != null) {
+                    Platform.runLater(() -> {
+                        MediaPlayer player = new MediaPlayer(sound);
+                        player.setVolume(volumeSlider.getValue() / 100.0);
+                        player.play();
+                        hitsoundPlayers.add(player);
+                        
+                        player.setOnEndOfMedia(() -> {
+                            hitsoundPlayers.remove(player);
+                            if (hitsoundPlayers.isEmpty()) {
+                                lblNowPlaying.setText("Nothing playing");
+                            }
+                        });
+                    });
+                    
+                    try {
+                        Thread.sleep(delayMs);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                } else {
+                    logger.debug("Sound not found: {}", soundName);
+                }
+            }
+        });
+    }
+    
+    private void stopCurrentAudio() {
+        if (currentAudioPlayer != null) {
+            currentAudioPlayer.stop();
+            currentAudioPlayer = null;
+        }
+        
+        for (MediaPlayer player : hitsoundPlayers) {
+            player.stop();
+        }
+        hitsoundPlayers.clear();
+    }
+    
+    private void updateAudioVolume(double volume) {
+        if (currentAudioPlayer != null) {
+            currentAudioPlayer.setVolume(volume);
+        }
+        
+        for (MediaPlayer player : hitsoundPlayers) {
+            player.setVolume(volume);
+        }
+    }
+    
+    private void startAutoplayAnimation() {
+        if (useEnhancedRenderer && enhancedRenderer == null) return;
+        if (!useEnhancedRenderer && simpleRenderer == null) return;
+        
+        isAnimating = true;
+        
+        if (animationTimer != null) {
+            animationTimer.stop();
+        }
+        
+        animationTimer = new AnimationTimer() {
+            private long lastUpdate = 0;
+            
+            @Override
+            public void handle(long now) {
+                if (lastUpdate == 0) {
+                    lastUpdate = now;
+                }
+                
+                double deltaTime = (now - lastUpdate) / 1_000_000_000.0;
+                lastUpdate = now;
+                
+                if (useEnhancedRenderer) {
+                    enhancedRenderer.update(deltaTime);
+                    enhancedRenderer.render();
+                } else {
+                    simpleRenderer.update(deltaTime);
+                    simpleRenderer.render();
+                }
+            }
+        };
+        
+        animationTimer.start();
+    }
+    
+    private void stopCurrentPreview() {
+        stopCurrentAudio();
+        if (animationTimer != null) {
+            animationTimer.stop();
+            animationTimer = null;
+        }
+        isAnimating = false;
     }
     
     private void showError(String title, String message) {
@@ -488,6 +754,84 @@ public class MainController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+    
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+    
+    
+    @FXML
+    private void onExtractCompressed() {
+        if (skinScannerService == null) {
+            showAlert("Error", "Scanner service not available");
+            return;
+        }
+        
+        List<Path> compressedFiles = skinScannerService.getExtractableCompressedSkinFiles();
+        if (compressedFiles.isEmpty()) {
+            showAlert("Info", "No extractable compressed skin files found.\nAll compressed files have already been extracted.");
+            return;
+        }
+        
+        // Show progress and extract files
+        lblStatus.setText("Extracting compressed skins...");
+        progressBar.setVisible(true);
+        progressBar.progressProperty().unbind(); // Unbind any existing binding
+        progressBar.setProgress(-1); // Indeterminate progress
+        
+        Task<Void> extractTask = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                int extracted = 0;
+                int total = compressedFiles.size();
+                
+                for (int i = 0; i < total; i++) {
+                    Path compressedFile = compressedFiles.get(i);
+                    updateProgress(i, total);
+                    
+                    try {
+                        if (skinScannerService.extractCompressedSkin(compressedFile)) {
+                            extracted++;
+                            logger.info("Successfully extracted: {}", compressedFile.getFileName());
+                        } else {
+                            logger.warn("Failed to extract: {}", compressedFile.getFileName());
+                        }
+                    } catch (Exception e) {
+                        logger.error("Error extracting: {}", compressedFile.getFileName(), e);
+                    }
+                }
+                
+                final int finalExtracted = extracted;
+                Platform.runLater(() -> {
+                    progressBar.setVisible(false);
+                    lblStatus.setText("Ready");
+                    
+                    if (finalExtracted > 0) {
+                        showInfo("Success", 
+                               String.format("Successfully extracted %d of %d compressed skin files", 
+                                           finalExtracted, total));
+                        
+                        // Refresh the skin list to show newly extracted skins
+                        startSkinScan();
+                    } else {
+                        showAlert("Warning", "No files were extracted successfully");
+                    }
+                });
+                
+                return null;
+            }
+        };
+        
+        progressBar.progressProperty().bind(extractTask.progressProperty());
+        
+        Thread extractThread = new Thread(extractTask);
+        extractThread.setDaemon(true);
+        extractThread.start();
     }
     
     // Custom ListCell for displaying skins
