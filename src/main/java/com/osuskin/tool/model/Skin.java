@@ -27,7 +27,7 @@ public class Skin {
     private String description;
     
     @JsonProperty("elements")
-    private Map<SkinElement.ElementType, SkinElement> elements;
+    private List<SkinElement> elements;
     
     @JsonProperty("thumbnailPath")
     private String thumbnailPath;
@@ -50,10 +50,14 @@ public class Skin {
     @JsonProperty("comboColors")
     private List<int[]> comboColors;  // RGB values for each combo color
     
+    @JsonProperty("isSpecial")
+    private boolean isSpecial;  // Mark special skins like Skin Container
+    
     public Skin() {
-        this.elements = new HashMap<>();
+        this.elements = new ArrayList<>();
         this.tags = new HashSet<>();
         this.comboColors = new ArrayList<>();
+        this.isSpecial = false;
     }
     
     public Skin(String name, Path directoryPath) {
@@ -111,36 +115,40 @@ public class Skin {
         this.description = description;
     }
     
-    public Map<SkinElement.ElementType, SkinElement> getElements() {
+    public List<SkinElement> getElements() {
         return elements;
     }
     
-    public void setElements(Map<SkinElement.ElementType, SkinElement> elements) {
-        this.elements = elements != null ? elements : new HashMap<>();
+    public void setElements(List<SkinElement> elements) {
+        this.elements = elements != null ? elements : new ArrayList<>();
     }
     
     public void addElement(SkinElement element) {
-        if (element != null && element.getType() != null) {
-            this.elements.put(element.getType(), element);
+        if (element != null) {
+            this.elements.add(element);
         }
     }
     
     public SkinElement getElement(SkinElement.ElementType type) {
-        return elements.get(type);
+        return elements.stream()
+                .filter(e -> e.getType() == type)
+                .findFirst()
+                .orElse(null);
     }
     
     public boolean hasElement(SkinElement.ElementType type) {
-        return elements.containsKey(type) && elements.get(type).isExists();
+        return elements.stream()
+                .anyMatch(e -> e.getType() == type && e.isExists());
     }
     
     public Collection<SkinElement> getImageElements() {
-        return elements.values().stream()
+        return elements.stream()
                 .filter(SkinElement::isImageFile)
                 .toList();
     }
     
     public Collection<SkinElement> getAudioElements() {
-        return elements.values().stream()
+        return elements.stream()
                 .filter(SkinElement::isAudioFile)
                 .toList();
     }
@@ -247,19 +255,19 @@ public class Skin {
     }
     
     public int getElementCount() {
-        return (int) elements.values().stream()
+        return (int) elements.stream()
                 .filter(SkinElement::isExists)
                 .count();
     }
     
     public int getImageElementCount() {
-        return (int) elements.values().stream()
+        return (int) elements.stream()
                 .filter(element -> element.isExists() && element.isImageFile())
                 .count();
     }
     
     public int getAudioElementCount() {
-        return (int) elements.values().stream()
+        return (int) elements.stream()
                 .filter(element -> element.isExists() && element.isAudioFile())
                 .count();
     }
@@ -291,6 +299,14 @@ public class Skin {
             comboColors = new ArrayList<>();
         }
         comboColors.add(new int[]{r, g, b});
+    }
+    
+    public boolean isSpecial() {
+        return isSpecial;
+    }
+    
+    public void setSpecial(boolean special) {
+        isSpecial = special;
     }
     
     @Override

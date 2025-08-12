@@ -35,7 +35,7 @@
       </VBox>
    </top>
    <center>
-      <SplitPane dividerPositions="0.55" prefHeight="160.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <SplitPane dividerPositions="0.5" prefHeight="160.0" prefWidth="200.0" BorderPane.alignment="CENTER">
         <items>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                <children>
@@ -72,91 +72,212 @@
             </AnchorPane>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                <children>
-                  <VBox fx:id="skinDetailsPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                     <children>
-                        <!-- Skin Name Header -->
-                        <HBox alignment="CENTER_LEFT" spacing="10.0">
-                           <children>
-                              <Label fx:id="lblSkinName" text="Skin Preview" styleClass="details-header">
-                                 <font>
-                                    <Font name="System Bold" size="14.0" />
-                                 </font>
-                              </Label>
-                              <Region HBox.hgrow="ALWAYS" />
-                              <Label fx:id="lblElementInfo" text="" styleClass="element-info" />
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" left="10.0" right="10.0" top="10.0" />
-                           </padding>
-                        </HBox>
-                        
-                        <Separator />
-                        
-                        <!-- Audio Controls -->
-                        <VBox spacing="5.0" styleClass="audio-controls">
-                           <children>
-                              <Label text="Audio Preview" styleClass="section-title" />
-                              
-                              <!-- Volume Control -->
-                              <HBox alignment="CENTER_LEFT" spacing="10.0">
+                  <TabPane fx:id="rightTabPane" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <tabs>
+                        <!-- Preview Tab -->
+                        <Tab text="Preview">
+                           <content>
+                              <VBox fx:id="skinDetailsPane">
                                  <children>
-                                    <Label text="Volume:" minWidth="50" />
-                                    <Slider fx:id="volumeSlider" min="0" max="100" value="50" 
-                                            showTickLabels="false" showTickMarks="false" 
-                                            prefWidth="150" HBox.hgrow="ALWAYS" />
-                                    <Label fx:id="lblVolume" text="50%" minWidth="35" />
-                                 </children>
-                              </HBox>
-                              
-                              <!-- Sound Buttons -->
-                              <HBox alignment="CENTER_LEFT" spacing="5.0">
-                                 <children>
-                                    <Button fx:id="btnPlayHitsounds" text="Hitsounds" 
-                                            onAction="#onPlayHitsounds" prefWidth="90" />
-                                    <Button fx:id="btnPlayMisc" text="Misc" 
-                                            onAction="#onPlayMiscSounds" prefWidth="60" />
-                                    <Button fx:id="btnStopAudio" text="Stop" 
-                                            onAction="#onStopAudio" prefWidth="50" />
-                                 </children>
-                              </HBox>
-                              
-                              <!-- Currently Playing -->
-                              <Label fx:id="lblNowPlaying" text="Nothing playing" styleClass="now-playing" />
-                           </children>
-                           <padding>
-                              <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
-                           </padding>
-                        </VBox>
-                        
-                        <Separator />
-                        
-                        <!-- Gameplay Preview Canvas -->
-                        <VBox fx:id="previewContainer" VBox.vgrow="ALWAYS" spacing="5.0">
-                           <children>
-                              <Label text="Visual Preview" styleClass="section-title" />
-                              
-                              <!-- Canvas Container -->
-                              <StackPane VBox.vgrow="ALWAYS" styleClass="canvas-container">
-                                 <children>
-                                    <!-- Placeholder when no skin selected -->
-                                    <VBox fx:id="placeholderContainer" alignment="CENTER" spacing="10">
+                                    <!-- Skin Name Header -->
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
                                        <children>
-                                          <Label text="🎮" style="-fx-font-size: 48px; -fx-text-fill: #cccccc;" />
-                                          <Label text="Select a skin to preview" style="-fx-text-fill: #999999;" />
+                                          <Label fx:id="lblSkinName" text="Skin Preview" styleClass="details-header">
+                                             <font>
+                                                <Font name="System Bold" size="14.0" />
+                                             </font>
+                                          </Label>
+                                          <Region HBox.hgrow="ALWAYS" />
+                                          <Label fx:id="lblElementInfo" text="" styleClass="element-info" />
+                                       </children>
+                                       <padding>
+                                          <Insets bottom="5.0" left="10.0" right="10.0" top="10.0" />
+                                       </padding>
+                                    </HBox>
+                                    
+                                    <Separator />
+                                    
+                                    <!-- Audio Controls -->
+                                    <VBox spacing="5.0" styleClass="audio-controls">
+                                       <children>
+                                          <Label text="Audio Preview" styleClass="section-title" />
+                                          
+                                          <!-- Volume Control -->
+                                          <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                             <children>
+                                                <Label text="Volume:" minWidth="50" />
+                                                <Slider fx:id="volumeSlider" min="0" max="100" value="50" 
+                                                        showTickLabels="false" showTickMarks="false" 
+                                                        prefWidth="150" HBox.hgrow="ALWAYS" />
+                                                <Label fx:id="lblVolume" text="50%" minWidth="35" />
+                                             </children>
+                                          </HBox>
+                                          
+                                          <!-- Sound Buttons -->
+                                          <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                             <children>
+                                                <Button fx:id="btnPlayHitsounds" text="Hitsounds" 
+                                                        onAction="#onPlayHitsounds" prefWidth="90" />
+                                                <Button fx:id="btnPlayMisc" text="Misc" 
+                                                        onAction="#onPlayMiscSounds" prefWidth="60" />
+                                                <Button fx:id="btnStopAudio" text="Stop" 
+                                                        onAction="#onStopAudio" prefWidth="50" />
+                                             </children>
+                                          </HBox>
+                                          
+                                          <!-- Currently Playing -->
+                                          <Label fx:id="lblNowPlaying" text="Nothing playing" styleClass="now-playing" />
+                                       </children>
+                                       <padding>
+                                          <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
+                                       </padding>
+                                    </VBox>
+                                    
+                                    <Separator />
+                                    
+                                    <!-- Gameplay Preview Canvas -->
+                                    <VBox fx:id="previewContainer" VBox.vgrow="ALWAYS" spacing="5.0">
+                                       <children>
+                                          <Label text="Visual Preview" styleClass="section-title" />
+                                          
+                                          <!-- Canvas Container -->
+                                          <StackPane VBox.vgrow="ALWAYS" styleClass="canvas-container">
+                                             <children>
+                                                <!-- Placeholder when no skin selected -->
+                                                <VBox fx:id="placeholderContainer" alignment="CENTER" spacing="10">
+                                                   <children>
+                                                      <Label text="🎮" style="-fx-font-size: 48px; -fx-text-fill: #cccccc;" />
+                                                      <Label text="Select a skin to preview" style="-fx-text-fill: #999999;" />
+                                                   </children>
+                                                </VBox>
+                                                <!-- Gameplay canvas (hidden initially) -->
+                                                <Canvas fx:id="gameplayCanvas" width="600" height="450" visible="false" />
+                                             </children>
+                                          </StackPane>
+                                       </children>
+                                       <padding>
+                                          <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
+                                       </padding>
+                                    </VBox>
+                                    
+                                 </children>
+                              </VBox>
+                           </content>
+                        </Tab>
+                        
+                        <!-- Selection Tab -->
+                        <Tab text="Selection">
+                           <content>
+                              <VBox spacing="15">
+                                 <children>
+                                    <!-- Selection Section (hidden for Skin Container) -->
+                                    <VBox fx:id="selectionSection" spacing="15">
+                                       <children>
+                                          <!-- Current Skin Info -->
+                                          <HBox alignment="CENTER_LEFT" spacing="10">
+                                             <children>
+                                                <Label text="Current Skin:" style="-fx-font-weight: bold;" />
+                                                <Label fx:id="currentSkinLabel" text="No skin selected" style="-fx-text-fill: #666666;" />
+                                                <Region HBox.hgrow="ALWAYS" />
+                                                <Button fx:id="selectAllButton" text="Select All" onAction="#handleSelectAll" />
+                                             </children>
+                                          </HBox>
+                                          
+                                          <Separator />
+                                          
+                                          <!-- Two Column Layout for Elements and Audio -->
+                                          <HBox spacing="30">
+                                             <children>
+                                                <!-- Elements Column -->
+                                                <VBox spacing="10" HBox.hgrow="ALWAYS">
+                                                   <children>
+                                                      <Label text="Elements" style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+                                                      <GridPane hgap="15" vgap="10">
+                                                         <children>
+                                                            <!-- Circles -->
+                                                            <Label text="Circles:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                                            <Button fx:id="circlesSelectButton" text="Select" onAction="#handleCirclesSelect" GridPane.columnIndex="1" GridPane.rowIndex="0" minWidth="80" />
+                                                            
+                                                            <!-- Cursor -->
+                                                            <Label text="Cursor:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                                            <Button fx:id="cursorSelectButton" text="Select" onAction="#handleCursorSelect" GridPane.columnIndex="1" GridPane.rowIndex="1" minWidth="80" />
+                                                            
+                                                            <!-- UI -->
+                                                            <Label text="UI:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                                            <Button fx:id="uiSelectButton" text="Select" onAction="#handleUISelect" GridPane.columnIndex="1" GridPane.rowIndex="2" minWidth="80" />
+                                                            
+                                                            <!-- Rest -->
+                                                            <Label text="Rest:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                                            <Button fx:id="restSelectButton" text="Select" onAction="#handleRestSelect" GridPane.columnIndex="1" GridPane.rowIndex="3" minWidth="80" />
+                                                         </children>
+                                                         <columnConstraints>
+                                                            <ColumnConstraints minWidth="80" />
+                                                            <ColumnConstraints minWidth="80" />
+                                                         </columnConstraints>
+                                                      </GridPane>
+                                                   </children>
+                                                </VBox>
+                                                
+                                                <!-- Audio Column -->
+                                                <VBox spacing="10" HBox.hgrow="ALWAYS">
+                                                   <children>
+                                                      <Label text="Audio" style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+                                                      <GridPane hgap="15" vgap="10">
+                                                         <children>
+                                                            <!-- HitSounds -->
+                                                            <Label text="HitSounds:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                                            <Button fx:id="hitsoundsSelectButton" text="Select" onAction="#handleHitSoundsSelect" GridPane.columnIndex="1" GridPane.rowIndex="0" minWidth="80" />
+                                                            
+                                                            <!-- Rest-Audio -->
+                                                            <Label text="Rest-Audio:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                                            <Button fx:id="restAudioSelectButton" text="Select" onAction="#handleRestAudioSelect" GridPane.columnIndex="1" GridPane.rowIndex="1" minWidth="80" />
+                                                         </children>
+                                                         <columnConstraints>
+                                                            <ColumnConstraints minWidth="80" />
+                                                            <ColumnConstraints minWidth="80" />
+                                                         </columnConstraints>
+                                                      </GridPane>
+                                                   </children>
+                                                </VBox>
+                                             </children>
+                                          </HBox>
+                                          
+                                          <Separator />
                                        </children>
                                     </VBox>
-                                    <!-- Gameplay canvas (hidden initially) -->
-                                    <Canvas fx:id="gameplayCanvas" width="600" height="450" visible="false" />
+                                    
+                                    <!-- Skin Container Section -->
+                                    <Label text="Skin Container" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                                    
+                                    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+                                       <content>
+                                          <VBox fx:id="containerContent" spacing="8">
+                                             <children>
+                                                <!-- Container groups will be added dynamically -->
+                                                <Label fx:id="containerEmptyLabel" text="No elements selected" style="-fx-text-fill: #999999;" />
+                                             </children>
+                                          </VBox>
+                                       </content>
+                                    </ScrollPane>
+                                    
+                                    <!-- Export Button -->
+                                    <HBox alignment="CENTER_RIGHT" spacing="10">
+                                       <children>
+                                          <Label fx:id="elementCountLabel" text="Total: 0 elements" style="-fx-text-fill: #666666;" />
+                                          <Region HBox.hgrow="ALWAYS" />
+                                          <Button fx:id="clearContainerButton" text="Clear Container" onAction="#handleClearContainer" disable="true" />
+                                          <Button fx:id="exportButton" text="Export As Skin" onAction="#handleExportSkin" disable="true" style="-fx-font-weight: bold;" />
+                                       </children>
+                                    </HBox>
                                  </children>
-                              </StackPane>
-                           </children>
-                           <padding>
-                              <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
-                           </padding>
-                        </VBox>
-                        
-                     </children>
-                  </VBox>
+                                 <padding>
+                                    <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+                                 </padding>
+                              </VBox>
+                           </content>
+                        </Tab>
+                     </tabs>
+                  </TabPane>
                </children>
             </AnchorPane>
         </items>

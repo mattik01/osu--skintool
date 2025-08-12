@@ -56,9 +56,57 @@ public class SkinScannerService {
         List<Skin> skins = new ArrayList<>();
         compressedSkinFiles.clear();
         
+        // First, ensure Skin Container exists and add it as the first skin
+        Path skinContainerPath = config.getSkinContainerPathAsPath();
+        if (skinContainerPath == null) {
+            skinContainerPath = skinsDirectory.resolve("Skin Container");
+            config.setSkinContainerPathAsPath(skinContainerPath);
+            configurationManager.saveConfiguration();
+        }
+        final Path finalSkinContainerPath = skinContainerPath;
+        
+        // Create Skin Container directory if it doesn't exist
+        if (!Files.exists(skinContainerPath)) {
+            try {
+                Files.createDirectories(skinContainerPath);
+                logger.info("Created Skin Container directory at: {}", skinContainerPath);
+            } catch (IOException e) {
+                logger.error("Failed to create Skin Container directory", e);
+            }
+        }
+        
+        // Always add Skin Container as first skin (even if empty)
+        try {
+            Skin skinContainer = scanSingleSkin(skinContainerPath);
+            if (skinContainer != null) {
+                skinContainer.setName("Skin Container");  // Special name
+                skinContainer.setSpecial(true);  // Mark as special
+                skins.add(skinContainer);
+            } else {
+                // Create a special empty skin for the container
+                skinContainer = new Skin("Skin Container", skinContainerPath);
+                skinContainer.setSpecial(true);
+                skinContainer.setFileCount(0);
+                skinContainer.setTotalSize(0);
+                skinContainer.setLastModified(LocalDateTime.now());
+                skins.add(skinContainer);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to scan Skin Container directory: {}", skinContainerPath, e);
+            // Even on error, add an empty Skin Container entry
+            Skin skinContainer = new Skin("Skin Container", skinContainerPath);
+            skinContainer.setSpecial(true);
+            skinContainer.setFileCount(0);
+            skinContainer.setTotalSize(0);
+            skinContainer.setLastModified(LocalDateTime.now());
+            skins.add(skinContainer);
+        }
+        
+        // Then scan other skins
         try (Stream<Path> entries = Files.walk(skinsDirectory, 1)) {
             entries
                 .filter(path -> !path.equals(skinsDirectory))
+                .filter(path -> !path.equals(finalSkinContainerPath))  // Skip Skin Container, already added
                 .forEach(entry -> {
                     if (Files.isDirectory(entry) && isSkinDirectory(entry)) {
                         try {
@@ -217,26 +265,86 @@ public class SkinScannerService {
     }
     
     private void scanSkinElements(Skin skin, Path skinDirectory) throws IOException {
+        // For Skin Container, we need ALL files for proper selection
+        boolean isSkinContainer = skin.getName().equals("Skin Container");
+        
         try (Stream<Path> files = Files.list(skinDirectory)) {
             files
                 .filter(Files::isRegularFile)
                 .forEach(file -> {
                     String fileName = file.getFileName().toString();
-                    SkinElement.ElementType elementType = SkinElement.ElementType.fromFileName(fileName);
+                    String lowerFileName = fileName.toLowerCase();
                     
-                    if (elementType != null) {
+                    // Skip skin.ini as it's metadata, not an element
+                    if (lowerFileName.equals("skin.ini")) {
+                        return;
+                    }
+                    
+                    // For skin container or selection purposes, include ALL files
+                    // For normal skins, only scan files we might need for preview
+                    if (isSkinContainer || shouldIncludeFile(lowerFileName)) {
+                        SkinElement.ElementType elementType = SkinElement.ElementType.fromFileName(lowerFileName);
+                        
                         try {
-                            SkinElement element = new SkinElement(elementType, file);
+                            SkinElement element;
+                            if (elementType != null) {
+                                element = new SkinElement(elementType, file);
+                            } else {
+                                // Create element without type but with actual filename
+                                element = new SkinElement();
+                                element.setFilePath(file.toString());
+                                element.setFileName(fileName); // Use original case
+                                element.setExists(true);
+                            }
                             element.setFileSize(Files.size(file));
                             skin.addElement(element);
                             
-                            logger.trace("Found skin element: {} -> {}", fileName, elementType);
+                            logger.trace("Found skin element: {}", fileName);
                         } catch (IOException e) {
                             logger.debug("Could not get file size for: {}", file, e);
                         }
                     }
                 });
         }
+    }
+    
+    private boolean shouldIncludeFile(String lowerFileName) {
+        // Include all files that might be skin-related
+        // This includes images, audio, ini files (except skin.ini), txt files, etc.
+        return lowerFileName.endsWith(".png") || lowerFileName.endsWith(".jpg") || 
+               lowerFileName.endsWith(".jpeg") || lowerFileName.endsWith(".wav") || 
+               lowerFileName.endsWith(".mp3") || lowerFileName.endsWith(".ogg") ||
+               lowerFileName.endsWith(".ini") || lowerFileName.endsWith(".txt") ||
+               lowerFileName.endsWith(".cfg") || lowerFileName.endsWith(".osk") ||
+               lowerFileName.endsWith(".osu") || lowerFileName.endsWith(".osb");
+    }
+    
+    public Skin scanSkin(Path skinDirectory) throws IOException {
+        String skinName = skinDirectory.getFileName().toString();
+        Skin skin = new Skin(skinName, skinDirectory);
+        
+        // Mark as special if it's the Skin Container
+        if (skinName.equals("Skin Container")) {
+            skin.setSpecial(true);
+        }
+        
+        // Parse skin.ini if present
+        parseSkinIni(skin, skinDirectory);
+        
+        // Scan for skin elements
+        scanSkinElements(skin, skinDirectory);
+        
+        // Find preview image
+        findPreviewImage(skin, skinDirectory);
+        
+        // Set basic statistics
+        skin.setFileCount(skin.getElements().size());
+        long totalSize = skin.getElements().stream()
+            .mapToLong(SkinElement::getFileSize)
+            .sum();
+        skin.setTotalSize(totalSize);
+        
+        return skin;
     }
     
     private void findPreviewImage(Skin skin, Path skinDirectory) {

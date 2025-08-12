@@ -2,8 +2,11 @@ package com.osuskin.tool.controller;
 
 import com.osuskin.tool.controller.SkinPreviewController;
 import com.osuskin.tool.model.Configuration;
+import com.osuskin.tool.model.ElementGroup;
 import com.osuskin.tool.model.Skin;
+import com.osuskin.tool.model.SkinContainer;
 import com.osuskin.tool.service.SkinScannerService;
+import com.osuskin.tool.service.SkinContainerService;
 import com.osuskin.tool.service.SkinElementLoader;
 import com.osuskin.tool.view.SimpleGameplayRenderer;
 import com.osuskin.tool.view.gameplay.GameplayRenderer;
@@ -19,6 +22,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -37,9 +41,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,6 +92,22 @@ public class MainController implements Initializable {
     // Gameplay Preview
     @FXML private Canvas gameplayCanvas;
     
+    // Selection Tab Components
+    @FXML private VBox selectionSection;
+    @FXML private Label currentSkinLabel;
+    @FXML private Button selectAllButton;
+    @FXML private Button circlesSelectButton;
+    @FXML private Button cursorSelectButton;
+    @FXML private Button uiSelectButton;
+    @FXML private Button restSelectButton;
+    @FXML private Button hitsoundsSelectButton;
+    @FXML private Button restAudioSelectButton;
+    @FXML private VBox containerContent;
+    @FXML private Label containerEmptyLabel;
+    @FXML private Label elementCountLabel;
+    @FXML private Button clearContainerButton;
+    @FXML private Button exportButton;
+    
     // Status bar
     @FXML private Label lblStatus;
     @FXML private ProgressBar progressBar;
@@ -94,6 +116,7 @@ public class MainController implements Initializable {
     // Services and data
     private ConfigurationManager configurationManager;
     private SkinScannerService skinScannerService;
+    private SkinContainerService skinContainerService;
     private ObservableList<Skin> allSkins;
     private FilteredList<Skin> filteredSkins;
     private SortedList<Skin> sortedSkins;
@@ -148,18 +171,37 @@ public class MainController implements Initializable {
         // Initially hide preview controls
         hidePreviewControls();
         
+        // Initialize skin container service
+        skinContainerService = new SkinContainerService();
+        
         logger.info("MainController initialization completed");
     }
     
     public void setConfigurationManager(ConfigurationManager configurationManager) {
         this.configurationManager = configurationManager;
         this.skinScannerService = new SkinScannerService(configurationManager);
+        this.skinContainerService = new SkinContainerService();
         
         // Update UI based on configuration
         Configuration config = configurationManager.getConfiguration();
+        
+        // Set persistent state for skin container service
+        skinContainerService.setPersistentState(config.getSkinContainerState());
+        
         if (config.isConfigured()) {
             lblDirectory.setText(config.getOsuSkinsDirectory());
             updateControlsState(true);
+            
+            // Restore skin container state
+            String containerPath = getSkinContainerPath();
+            if (containerPath != null && !config.getSkinContainerState().isEmpty()) {
+                skinContainerService.restoreFromPersistentState(
+                    config.getSkinContainerState(),
+                    config.getOsuSkinsDirectory(),
+                    containerPath
+                );
+                updateContainerUI();
+            }
             
             if (config.isAutoScanOnStartup()) {
                 Platform.runLater(this::startSkinScan);
@@ -257,6 +299,7 @@ public class MainController implements Initializable {
         Skin selectedSkin = listSkins.getSelectionModel().getSelectedItem();
         if (selectedSkin != null) {
             displaySkinPreview(selectedSkin);
+            updateSelectionUI();  // Update Selection tab UI
         }
     }
     
@@ -374,6 +417,21 @@ public class MainController implements Initializable {
             List<Skin> scannedSkins = scanTask.getValue();
             allSkins.setAll(scannedSkins);
             updateSkinCount();
+            
+            // Restore container state after scan if it was lost
+            Configuration currentConfig = configurationManager.getConfiguration();
+            if (!currentConfig.getSkinContainerState().isEmpty() && skinContainerService.getTotalElementCount() == 0) {
+                String containerPath = getSkinContainerPath();
+                if (containerPath != null) {
+                    skinContainerService.restoreFromPersistentState(
+                        currentConfig.getSkinContainerState(),
+                        currentConfig.getOsuSkinsDirectory(),
+                        containerPath
+                    );
+                }
+            }
+            
+            updateContainerUI();  // Update container UI after scan
             lblStatus.setText("Scan completed. Found " + scannedSkins.size() + " skins.");
             progressBar.setVisible(false);
             logger.info("Skin scan completed. Found {} skins", scannedSkins.size());
@@ -527,73 +585,18 @@ public class MainController implements Initializable {
             simpleRenderer = new SimpleGameplayRenderer(gameplayCanvas, elementLoader);
         }
         
-        // Load elements asynchronously
-        CompletableFuture.runAsync(() -> {
-            preloadGameplayElements();
-            preloadAudioElements();
-            
-            Platform.runLater(() -> {
-                // Update element info
-                updateElementInfo();
-                
-                // Initialize and start autoplay animation
-                if (useEnhancedRenderer) {
-                    enhancedRenderer.initialize();
-                } else {
-                    simpleRenderer.initialize();
-                }
-                startAutoplayAnimation();
-            });
+        // Update element info immediately
+        updateElementInfo();
+        
+        // Initialize and start autoplay animation without preloading
+        Platform.runLater(() -> {
+            if (useEnhancedRenderer) {
+                enhancedRenderer.initialize();
+            } else {
+                simpleRenderer.initialize();
+            }
+            startAutoplayAnimation();
         });
-    }
-    
-    private void preloadGameplayElements() {
-        if (elementLoader == null) return;
-        
-        // Preload hit circle elements
-        elementLoader.loadImage("hitcircle");
-        elementLoader.loadImage("hitcircleoverlay");
-        elementLoader.loadImage("approachcircle");
-        
-        // Preload slider elements
-        elementLoader.loadAnimation("sliderb");
-        elementLoader.loadImage("sliderfollowcircle");
-        elementLoader.loadImage("reversearrow");
-        
-        // Preload cursor
-        elementLoader.loadImage("cursor");
-        elementLoader.loadImage("cursortrail");
-        
-        // Preload hit bursts and lighting
-        elementLoader.loadAnimation("hit300");
-        elementLoader.loadAnimation("hit100");
-        elementLoader.loadAnimation("hit50");
-        elementLoader.loadAnimation("hit0");  // Miss animation
-        elementLoader.loadImage("lighting");
-        
-        // Preload numbers for combo display
-        for (int i = 0; i < 10; i++) {
-            elementLoader.loadImage("default-" + i);
-        }
-    }
-    
-    private void preloadAudioElements() {
-        if (elementLoader == null) return;
-        
-        // Preload common hitsounds
-        elementLoader.loadAudio("normal-hitnormal");
-        elementLoader.loadAudio("normal-hitclap");
-        elementLoader.loadAudio("normal-hitwhistle");
-        elementLoader.loadAudio("normal-hitfinish");
-        
-        elementLoader.loadAudio("soft-hitnormal");
-        elementLoader.loadAudio("soft-hitclap");
-        
-        // Preload misc sounds
-        elementLoader.loadAudio("applause");
-        elementLoader.loadAudio("failsound");
-        elementLoader.loadAudio("sectionpass");
-        elementLoader.loadAudio("combobreak");
     }
     
     private void updateElementInfo() {
@@ -757,7 +760,11 @@ public class MainController implements Initializable {
     }
     
     private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
+        showAlert(Alert.AlertType.WARNING, title, message);
+    }
+    
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
@@ -834,6 +841,342 @@ public class MainController implements Initializable {
         extractThread.start();
     }
     
+    // Selection Tab Handler Methods
+    @FXML
+    private void handleCirclesSelect() {
+        selectElementGroup(ElementGroup.CIRCLES);
+    }
+    
+    @FXML
+    private void handleCursorSelect() {
+        selectElementGroup(ElementGroup.CURSOR);
+    }
+    
+    @FXML
+    private void handleUISelect() {
+        selectElementGroup(ElementGroup.UI);
+    }
+    
+    @FXML
+    private void handleRestSelect() {
+        selectElementGroup(ElementGroup.REST);
+    }
+    
+    @FXML
+    private void handleHitSoundsSelect() {
+        selectElementGroup(ElementGroup.HITSOUNDS);
+    }
+    
+    @FXML
+    private void handleRestAudioSelect() {
+        selectElementGroup(ElementGroup.REST_AUDIO);
+    }
+    
+    @FXML
+    private void handleSelectAll() {
+        Skin selectedSkin = listSkins.getSelectionModel().getSelectedItem();
+        if (selectedSkin == null || selectedSkin.isSpecial()) {
+            showAlert(Alert.AlertType.WARNING, "No Skin Selected", "Please select a skin first.");
+            return;
+        }
+        
+        String containerPath = getSkinContainerPath();
+        skinContainerService.selectAllGroups(selectedSkin, containerPath);
+        
+        // Save configuration after changes
+        if (configurationManager != null) {
+            configurationManager.saveConfiguration();
+        }
+        
+        updateSelectionUI();
+        updateContainerUI();
+        refreshSkinContainer();
+    }
+    
+    @FXML
+    private void handleClearContainer() {
+        String containerPath = getSkinContainerPath();
+        skinContainerService.clearContainer(containerPath);
+        
+        // Save configuration after clearing
+        if (configurationManager != null) {
+            configurationManager.saveConfiguration();
+        }
+        
+        updateSelectionUI();
+        updateContainerUI();
+        refreshSkinContainer();
+    }
+    
+    @FXML
+    private void handleExportSkin() {
+        if (skinContainerService.getTotalElementCount() == 0) {
+            showAlert(Alert.AlertType.WARNING, "Empty Container", "No elements selected to export.");
+            return;
+        }
+        
+        TextInputDialog dialog = new TextInputDialog("Mixed Skin");
+        dialog.setTitle("Export Skin");
+        dialog.setHeaderText("Enter name for the new skin:");
+        dialog.setContentText("Skin name:");
+        
+        dialog.showAndWait().ifPresent(skinName -> {
+            if (skinName.trim().isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Invalid Name", "Skin name cannot be empty.");
+                return;
+            }
+            
+            try {
+                String targetDirectory = configurationManager.getConfiguration().getOsuSkinsDirectory();
+                skinContainerService.exportSkin(targetDirectory, skinName);
+                
+                showAlert(Alert.AlertType.INFORMATION, "Export Successful", 
+                    "Skin exported successfully as: " + skinName);
+                
+                // Don't clear container after export - keep the selections
+                // Just refresh the skin list to show the new skin
+                startSkinScan();
+                
+            } catch (IOException e) {
+                logger.error("Failed to export skin", e);
+                showAlert(Alert.AlertType.ERROR, "Export Failed", 
+                    "Failed to export skin: " + e.getMessage());
+            }
+        });
+    }
+    
+    private void selectElementGroup(ElementGroup group) {
+        Skin selectedSkin = listSkins.getSelectionModel().getSelectedItem();
+        if (selectedSkin == null || selectedSkin.isSpecial()) {
+            showAlert(Alert.AlertType.WARNING, "No Skin Selected", "Please select a skin first.");
+            return;
+        }
+        
+        String containerPath = getSkinContainerPath();
+        
+        if (skinContainerService.isGroupSelected(group, selectedSkin.getName())) {
+            skinContainerService.deselectGroup(group, containerPath);
+        } else {
+            skinContainerService.selectGroup(group, selectedSkin, containerPath);
+        }
+        
+        // Save configuration after changes
+        if (configurationManager != null) {
+            configurationManager.saveConfiguration();
+        }
+        
+        updateSelectionUI();
+        updateContainerUI();
+        refreshSkinContainer();
+    }
+    
+    private void updateSelectionUI() {
+        Skin selectedSkin = listSkins.getSelectionModel().getSelectedItem();
+        
+        // Hide selection section if Skin Container is selected
+        if (selectedSkin != null && selectedSkin.isSpecial()) {
+            selectionSection.setVisible(false);
+            selectionSection.setManaged(false);
+            return;
+        } else {
+            selectionSection.setVisible(true);
+            selectionSection.setManaged(true);
+        }
+        
+        if (selectedSkin != null && !selectedSkin.isSpecial()) {
+            currentSkinLabel.setText(selectedSkin.getName());
+            selectAllButton.setDisable(false);
+            
+            // Update individual group buttons
+            updateGroupButton(circlesSelectButton, ElementGroup.CIRCLES, selectedSkin.getName());
+            updateGroupButton(cursorSelectButton, ElementGroup.CURSOR, selectedSkin.getName());
+            updateGroupButton(uiSelectButton, ElementGroup.UI, selectedSkin.getName());
+            updateGroupButton(restSelectButton, ElementGroup.REST, selectedSkin.getName());
+            updateGroupButton(hitsoundsSelectButton, ElementGroup.HITSOUNDS, selectedSkin.getName());
+            updateGroupButton(restAudioSelectButton, ElementGroup.REST_AUDIO, selectedSkin.getName());
+        } else {
+            currentSkinLabel.setText("No skin selected");
+            selectAllButton.setDisable(true);
+            
+            // Reset all buttons
+            resetGroupButton(circlesSelectButton);
+            resetGroupButton(cursorSelectButton);
+            resetGroupButton(uiSelectButton);
+            resetGroupButton(restSelectButton);
+            resetGroupButton(hitsoundsSelectButton);
+            resetGroupButton(restAudioSelectButton);
+        }
+    }
+    
+    private void updateGroupButton(Button button, ElementGroup group, String skinName) {
+        if (skinContainerService.isGroupSelected(group, skinName)) {
+            button.setText("✓");
+            button.setStyle("-fx-background-color: #90EE90; -fx-font-weight: bold;");
+        } else {
+            button.setText("Select");
+            button.setStyle("");
+        }
+    }
+    
+    private void resetGroupButton(Button button) {
+        button.setText("Select");
+        button.setStyle("");
+        button.setDisable(false);
+    }
+    
+    private void updateContainerUI() {
+        if (containerContent == null || containerEmptyLabel == null) {
+            return;  // UI not initialized yet
+        }
+        
+        containerContent.getChildren().clear();
+        
+        int totalElements = skinContainerService.getTotalElementCount();
+        
+        if (totalElements == 0) {
+            // Check if the Skin Container directory has files even if not tracked
+            String containerPath = getSkinContainerPath();
+            boolean hasUntrackedFiles = false;
+            if (containerPath != null) {
+                Path containerPathObj = Paths.get(containerPath);
+                if (Files.exists(containerPathObj)) {
+                    try {
+                        hasUntrackedFiles = Files.list(containerPathObj)
+                            .filter(Files::isRegularFile)
+                            .findFirst()
+                            .isPresent();
+                    } catch (IOException e) {
+                        logger.error("Failed to check untracked files", e);
+                    }
+                }
+            }
+            
+            if (hasUntrackedFiles) {
+                containerEmptyLabel.setText("Container has untracked files");
+            } else {
+                containerEmptyLabel.setText("Empty");
+            }
+            containerEmptyLabel.setVisible(true);
+            containerContent.getChildren().add(containerEmptyLabel);
+            clearContainerButton.setDisable(!hasUntrackedFiles);
+            exportButton.setDisable(true);
+            elementCountLabel.setText("Total: 0 elements");
+        } else {
+            containerEmptyLabel.setVisible(false);
+            
+            // Add group info for each selected group
+            for (ElementGroup group : ElementGroup.values()) {
+                SkinContainer.ContainerGroupInfo info = skinContainerService.getGroupInfo(group);
+                if (info.hasElements()) {
+                    HBox groupBox = new HBox(10);
+                    groupBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                    
+                    Label groupLabel = new Label(group.getDisplayName() + ":");
+                    groupLabel.setStyle("-fx-font-weight: bold; -fx-min-width: 100px;");
+                    
+                    Label sourceLabel = new Label(info.getSourceSkinName());
+                    sourceLabel.setStyle("-fx-text-fill: #666666;");
+                    
+                    Button removeButton = new Button("Remove");
+                    removeButton.setOnAction(e -> {
+                        String containerPath = getSkinContainerPath();
+                        skinContainerService.deselectGroup(group, containerPath);
+                        
+                        // Save configuration after changes
+                        if (configurationManager != null) {
+                            configurationManager.saveConfiguration();
+                        }
+                        
+                        updateSelectionUI();
+                        updateContainerUI();
+                        refreshSkinContainer();
+                    });
+                    
+                    javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+                    HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+                    
+                    groupBox.getChildren().addAll(groupLabel, sourceLabel, spacer, removeButton);
+                    containerContent.getChildren().add(groupBox);
+                }
+            }
+            
+            clearContainerButton.setDisable(false);
+            exportButton.setDisable(false);
+            elementCountLabel.setText("Total: " + totalElements + " elements");
+        }
+    }
+    
+    private String getSkinContainerPath() {
+        if (configurationManager == null) return null;
+        String skinsDir = configurationManager.getConfiguration().getOsuSkinsDirectory();
+        if (skinsDir == null) return null;
+        return Paths.get(skinsDir, "Skin Container").toString();
+    }
+    
+    private void refreshSkinContainer() {
+        // Find and refresh the Skin Container in the list
+        String containerPath = getSkinContainerPath();
+        if (containerPath == null) return;
+        
+        Path containerPathObj = Paths.get(containerPath);
+        
+        // Check if container has any files
+        boolean hasFiles = false;
+        if (Files.exists(containerPathObj)) {
+            try {
+                hasFiles = Files.list(containerPathObj)
+                    .filter(Files::isRegularFile)
+                    .findFirst()
+                    .isPresent();
+            } catch (IOException e) {
+                logger.error("Failed to check container files", e);
+            }
+        }
+        
+        // Find Skin Container in list
+        Skin containerSkin = null;
+        for (Skin skin : allSkins) {
+            if (skin.getName().equals("Skin Container")) {
+                containerSkin = skin;
+                break;
+            }
+        }
+        
+        if (hasFiles || skinContainerService.getTotalElementCount() > 0) {
+            // Container has content - ensure it exists in the list
+            if (containerSkin == null && Files.exists(containerPathObj)) {
+                // Add Skin Container to the list if not present
+                containerSkin = new Skin("Skin Container", containerPathObj);
+                containerSkin.setSpecial(true);
+                allSkins.add(0, containerSkin);  // Add at beginning of list
+            }
+            
+            if (containerSkin != null) {
+                // Rescan the container
+                try {
+                    containerSkin.getElements().clear();
+                    skinScannerService.scanSkin(containerPathObj);
+                    
+                    // Update preview if selected
+                    Skin selectedSkin = listSkins.getSelectionModel().getSelectedItem();
+                    if (selectedSkin != null && selectedSkin.getName().equals("Skin Container")) {
+                        displaySkinPreview(selectedSkin);
+                    }
+                    
+                    logger.debug("Refreshed Skin Container with {} files", containerSkin.getElements().size());
+                } catch (Exception e) {
+                    logger.error("Failed to refresh Skin Container", e);
+                }
+            }
+        } else {
+            // Container is empty - remove from list if present
+            if (containerSkin != null) {
+                allSkins.remove(containerSkin);
+                logger.debug("Removed empty Skin Container from list");
+            }
+        }
+    }
+    
     // Custom ListCell for displaying skins
     private static class SkinListCell extends ListCell<Skin> {
         @Override
@@ -843,9 +1186,16 @@ public class MainController implements Initializable {
             if (empty || skin == null) {
                 setText(null);
                 setGraphic(null);
+                setStyle("");  // Reset style
             } else {
                 setText(skin.getDisplayInfo());
-                // TODO: Add thumbnail image
+                
+                // Apply special styling for Skin Container
+                if (skin.isSpecial()) {
+                    setStyle("-fx-font-weight: bold; -fx-background-color: #f0f8ff; -fx-text-fill: #2c3e50;");
+                } else {
+                    setStyle("");  // Reset to default style
+                }
             }
         }
     }

@@ -7,8 +7,7 @@ import javafx.scene.media.Media;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.InputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -300,16 +299,43 @@ public class SkinElementLoader {
     }
     
     private Image tryLoadImageFromDirectory(Path directory, String elementName) {
+        // Try each image extension with both exact case and case-insensitive search
         for (String ext : IMAGE_EXTENSIONS) {
+            // First try exact case
             Path imagePath = directory.resolve(elementName + "." + ext);
             if (Files.exists(imagePath)) {
                 try {
-                    return new Image(imagePath.toUri().toString());
+                    logger.debug("Found image file: {} with extension: {}", elementName, ext);
+                    Image image = new Image(imagePath.toUri().toString());
+                    // Verify the image loaded correctly
+                    if (!image.isError()) {
+                        return image;
+                    } else {
+                        logger.warn("Image error for {}: {}", imagePath, image.getException());
+                    }
                 } catch (Exception e) {
                     logger.error("Error loading image: {}", imagePath, e);
                 }
             }
+            
+            // Try case-insensitive search if exact match fails
+            Path foundPath = findFileIgnoreCase(directory, elementName + "." + ext);
+            if (foundPath != null) {
+                try {
+                    logger.debug("Found image file (case-insensitive): {}", foundPath.getFileName());
+                    Image image = new Image(foundPath.toUri().toString());
+                    if (!image.isError()) {
+                        return image;
+                    }
+                } catch (Exception e) {
+                    logger.error("Error loading image: {}", foundPath, e);
+                }
+            }
         }
+        
+        // Log which formats were checked for debugging
+        logger.debug("Image not found for '{}' in directory: {}. Checked extensions: {}", 
+                    elementName, directory, IMAGE_EXTENSIONS);
         return null;
     }
     
@@ -318,16 +344,43 @@ public class SkinElementLoader {
     }
     
     private Media tryLoadAudioFromDirectory(Path directory, String elementName) {
+        // Try each audio extension with both exact case and case-insensitive search
         for (String ext : AUDIO_EXTENSIONS) {
+            // First try exact case
             Path audioPath = directory.resolve(elementName + "." + ext);
             if (Files.exists(audioPath)) {
                 try {
-                    return new Media(audioPath.toUri().toString());
+                    logger.debug("Found audio file: {} with extension: {}", elementName, ext);
+                    Media media = new Media(audioPath.toUri().toString());
+                    // Verify the media loaded correctly
+                    if (media.getError() == null) {
+                        return media;
+                    } else {
+                        logger.warn("Media error for {}: {}", audioPath, media.getError());
+                    }
                 } catch (Exception e) {
                     logger.error("Error loading audio: {}", audioPath, e);
                 }
             }
+            
+            // Try case-insensitive search if exact match fails
+            Path foundPath = findFileIgnoreCase(directory, elementName + "." + ext);
+            if (foundPath != null) {
+                try {
+                    logger.debug("Found audio file (case-insensitive): {}", foundPath.getFileName());
+                    Media media = new Media(foundPath.toUri().toString());
+                    if (media.getError() == null) {
+                        return media;
+                    }
+                } catch (Exception e) {
+                    logger.error("Error loading audio: {}", foundPath, e);
+                }
+            }
         }
+        
+        // Log which formats were checked
+        logger.debug("Audio not found for '{}' in directory: {}. Checked extensions: {}", 
+                    elementName, directory, AUDIO_EXTENSIONS);
         return null;
     }
     
@@ -388,6 +441,28 @@ public class SkinElementLoader {
         }
         
         return stats;
+    }
+    
+    /**
+     * Find a file in a directory with case-insensitive matching.
+     * Returns the actual path if found, null otherwise.
+     */
+    private Path findFileIgnoreCase(Path directory, String fileName) {
+        if (!Files.exists(directory) || !Files.isDirectory(directory)) {
+            return null;
+        }
+        
+        String lowerFileName = fileName.toLowerCase();
+        try {
+            return Files.list(directory)
+                .filter(Files::isRegularFile)
+                .filter(path -> path.getFileName().toString().toLowerCase().equals(lowerFileName))
+                .findFirst()
+                .orElse(null);
+        } catch (IOException e) {
+            logger.debug("Error searching for file case-insensitive: {}", fileName, e);
+            return null;
+        }
     }
     
     public static class SkinElementStats {

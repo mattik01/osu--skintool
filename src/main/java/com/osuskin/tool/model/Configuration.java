@@ -44,6 +44,9 @@ public class Configuration {
     @JsonProperty("windowMaximized")
     private boolean windowMaximized = false;
     
+    @JsonProperty("skinContainerState")
+    private SkinContainerState skinContainerState = new SkinContainerState();
+    
     public Configuration() {
         // Default constructor for Jackson
     }
@@ -163,6 +166,17 @@ public class Configuration {
     
     public boolean isConfigured() {
         return osuSkinsDirectory != null && !osuSkinsDirectory.trim().isEmpty();
+    }
+    
+    public SkinContainerState getSkinContainerState() {
+        if (skinContainerState == null) {
+            skinContainerState = new SkinContainerState();
+        }
+        return skinContainerState;
+    }
+    
+    public void setSkinContainerState(SkinContainerState skinContainerState) {
+        this.skinContainerState = skinContainerState;
     }
     
     @Override

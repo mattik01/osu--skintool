@@ -107,3 +107,89 @@ When a circle is successfully hit, these appear in order:
 - **sliderball.png**: 128x128 pixels
 
 These sizes can vary between skins, but these are common defaults that work well.
+
+## Audio Elements
+
+osu! skins can customize a wide variety of audio files to enhance the gameplay experience. All audio files should be in .wav format unless otherwise noted (some support .mp3/.ogg for longer files).
+
+### Interface Sounds
+
+#### Menu and Navigation
+- **heartbeat.wav** - Plays when hovering over the osu! cookie in main menu
+- **seeya.wav** - Plays when closing the client (requires osu!supporter)
+- **welcome.wav** - Plays when launching the client (requires osu!supporter)
+- **menuback.wav** - Menu back button sound
+- **menuhit.wav** - Menu selection sound
+- **menu-back-click.wav** - Alternative back button click
+- **menu-direct-click.wav** - osu!direct click sound
+- **menu-edit-click.wav** - Edit button click
+- **menu-exit-click.wav** - Exit button click
+- **menu-freeplay-click.wav** - Solo/freeplay button click
+- **menu-multiplayer-click.wav** - Multiplayer button click
+- **menu-options-click.wav** - Options button click
+- **menu-play-click.wav** - Play button click
+- **back-button-click.wav** - General back button sound
+- **click-close.wav** - Window/dialog close sound
+- **click-short-confirm.wav** - Short confirmation click
+
+#### Input Sounds
+- **key-confirm.wav** - Sending chat messages or confirming input
+- **key-delete.wav** - Deleting text
+- **key-movement.wav** - Moving the text cursor
+- **key-press-1.wav** through **key-press-4.wav** - Key press sounds for chat/search/edit fields
+
+#### UI Elements
+- **check-on.wav** - Checkbox checked sound
+- **check-off.wav** - Checkbox unchecked sound
+
+### Gameplay Sounds
+
+#### Game Screens
+- **applause.wav** - Plays on the ranking screen after clearing a map (supports .mp3/.ogg for longer files)
+- **pause-loop.wav** - Loops during pause screens, fades when window loses focus
+
+#### Metronome
+- **metronomelow.wav** - Used in beatmap editor, offset wizard, and for osu!catch banana ticks
+
+### Hitsounds
+
+Hitsounds are organized by sampleset. Each sampleset can have its own version of each hitsound:
+- **Normal** sampleset (prefix: normal-)
+- **Soft** sampleset (prefix: soft-)
+- **Drum** sampleset (prefix: drum-)
+
+#### Core Hitsounds (for each sampleset)
+- **[sampleset]-hitnormal.wav** - Basic hit sound
+- **[sampleset]-hitclap.wav** - Clap addition
+- **[sampleset]-hitfinish.wav** - Finish/cymbal addition
+- **[sampleset]-hitwhistle.wav** - Whistle addition
+
+#### Slider Sounds (for each sampleset)
+- **[sampleset]-slidertick.wav** - Sound when passing over slider ticks
+- **[sampleset]-sliderslide.wav** - Continuous sound while sliding (looped)
+- **[sampleset]-sliderwhistle.wav** - Whistle sound during sliding (looped)
+
+Example filenames:
+- normal-hitnormal.wav, soft-hitnormal.wav, drum-hitnormal.wav
+- normal-hitclap.wav, soft-hitclap.wav, drum-hitclap.wav
+- etc.
+
+### Spinner Sounds
+- **spinnerspin.wav** - Loops during spinner spinning, pitch modulates with speed unless disabled via SpinnerFrequencyModulate
+- **spinnerbonus.wav** - Plays when gaining 1000 spinner bonus points
+- **spinnerbonus-max.wav** - Lazer-only: plays when maximum spinner score is already reached
+
+### Nightcore Mod Sounds
+
+These sounds only play when the Nightcore mod is active:
+- **nightcore-kick.wav** - Plays on beats 1 and 3
+- **nightcore-clap.wav** - Plays on beats 2 and 4
+- **nightcore-hat.wav** - Plays on every odd quaver (when slider tick rate is multiple of 2)
+- **nightcore-finish.wav** - Plays on the first beat of every 4 measures (unless timing point omits barline)
+
+### Audio Format Notes
+- Most sounds should be in .wav format for best compatibility
+- **applause.wav** can use .mp3 or .ogg format for longer duration
+- Keep file sizes reasonable - optimize audio quality vs. file size
+- Looped sounds (pause-loop, sliderslide, sliderwhistle, spinnerspin) should loop seamlessly
+- Volume levels should be balanced across all sounds to avoid jarring transitions

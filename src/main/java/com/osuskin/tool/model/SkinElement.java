@@ -10,6 +10,9 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SkinElement {
     
+    @JsonProperty("fileName")
+    private String fileName;
+    
     public enum ElementType {
         CURSOR("cursor.png", "Cursor"),
         MENU_BACK("menu-back.png", "Menu Background"),
@@ -85,6 +88,9 @@ public class SkinElement {
     @JsonProperty("filePath")
     private String filePath;
     
+    @JsonProperty("actualFileName")
+    private String actualFileName;  // Store the actual filename from disk
+    
     @JsonProperty("thumbnailPath")
     private String thumbnailPath;
     
@@ -101,6 +107,7 @@ public class SkinElement {
     public SkinElement(ElementType type, Path filePath) {
         this.type = type;
         this.filePath = filePath.toString();
+        this.actualFileName = filePath.getFileName().toString();
         this.exists = true;
     }
     
@@ -165,7 +172,15 @@ public class SkinElement {
     }
     
     public String getFileName() {
+        // Return actual filename if available, otherwise use type's filename
+        if (actualFileName != null) {
+            return actualFileName;
+        }
         return type != null ? type.getFileName() : "unknown";
+    }
+    
+    public void setFileName(String fileName) {
+        this.actualFileName = fileName;
     }
     
     public boolean isAudioFile() {
