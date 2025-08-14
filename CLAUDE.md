@@ -198,12 +198,6 @@ src/main/resources/
   - Proper hit object timeline with overlap
   - Consistent scaling system for all elements
 
-### ⏳ Planned Features
-- Export/import functionality
-- Skin editing capabilities
-- Batch operations
-- Cloud sync support
-
 ## Related Documentation
 - `OSU_SKIN_RENDERING.md` - Comprehensive guide to osu! skin element rendering
 - `src/main/resources/default-skin/README.md` - Default skin setup instructions
