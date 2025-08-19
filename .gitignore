@@ -67,5 +67,8 @@ dist/
 *.tempbeatmap-hitsound-extractor/beatmaps/
 beatmap-hitsound-extractor/extracted_arrangements/
 beatmap-hitsound-extractor/rendered_hitsounds/
-beatmap-hitsound-extractor/samples/
 beatmap-hitsound-extractor/*.log
+beatmap-hitsound-extractor/__pycache__/
+beatmap-hitsound-extractor/used_hitsounds_complete/
+__pycache__/
+*.pyc
