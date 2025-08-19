@@ -1,29 +1,19 @@
 #!/bin/bash
 
-# WSL Display Configuration Script
-# This script sets up the display environment for running JavaFX applications in WSL
+# Simple run script for WSL/Linux environments
+# Sets display for X11 if needed
 
-echo "Setting up display environment for WSL..."
-
-# Check if running in WSL
-if grep -qi microsoft /proc/version; then
-    echo "WSL environment detected"
-    
-    # Set DISPLAY variable for WSLg (Windows 11) or X server (Windows 10)
-    if [ -z "$DISPLAY" ]; then
-        export DISPLAY=:0
-        echo "DISPLAY set to :0"
-    else
-        echo "DISPLAY already set to: $DISPLAY"
-    fi
-    
-    # Additional JavaFX settings for better compatibility
-    export _JAVA_OPTIONS="-Djava.awt.headless=false"
-    
-    echo "Environment configured successfully!"
-else
-    echo "Not running in WSL, using default display settings"
+if [ -z "$DISPLAY" ]; then
+    export DISPLAY=:0
 fi
 
 echo "Starting osu! Skin Selection Tool..."
+echo ""
+echo "NOTE: In WSL, your Windows folders are available under /mnt/"
+echo "  C: drive -> /mnt/c/"
+echo "  D: drive -> /mnt/d/"
+echo ""
+echo "Example osu! skins path: /mnt/c/Users/YOUR_USERNAME/AppData/Local/osu!/Skins/"
+echo ""
+
 mvn javafx:run
