@@ -8,8 +8,34 @@
       "Bash(mvn:*)",
       "Bash(sudo apt:*)",
       "Bash(sudo apt install:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(export DISPLAY=:0)",
+      "Bash(echo $DISPLAY)",
+      "Bash(./detect_osu_path.sh)",
+      "Bash(./run_wsl.sh)",
+      "Bash(git add DEVELOPMENT_HISTORY.md run_wsl.sh)",
+      "Bash(python:*)",
+      "Bash(find:*)",
+      "Bash(ffprobe:*)",
+      "Bash(cat:*)",
+      "Bash(for f in extracted_arrangements_v2/*/arrangement.json)",
+      "Bash(grep:*)",
+      "Bash(done)",
+      "Bash(ls:*)",
+      "Bash(timeout:*)",
+      "Bash(pip install:*)",
+      "Bash(apt install:*)",
+      "Bash(test:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(head:*)",
+      "Bash(cp:*)",
+      "Bash(./run_all.sh)",
+      "Bash(mv:*)",
+      "Bash(git add:*)"
     ],
-    "deny": []
+    "deny": [],
+    "additionalDirectories": [
+      "/root/skins/-    《DT》 - 『 東方Project 』 Paper Touhou Project  -"
+    ]
   }
 }

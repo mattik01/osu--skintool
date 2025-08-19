@@ -64,4 +64,8 @@ dist/
 
 # Temporary files
 *.tmp
-*.temp
+*.tempbeatmap-hitsound-extractor/beatmaps/
+beatmap-hitsound-extractor/extracted_arrangements/
+beatmap-hitsound-extractor/rendered_hitsounds/
+beatmap-hitsound-extractor/samples/
+beatmap-hitsound-extractor/*.log
