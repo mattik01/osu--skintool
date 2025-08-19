@@ -22,6 +22,7 @@ public class GameplayRenderer {
     private final Canvas canvas;
     private final SkinElementLoader elementLoader;
     private final GraphicsContext gc;
+    private com.osuskin.tool.model.Skin currentSkin;
     
     // Skin elements
     private Image hitCircle;
@@ -45,9 +46,6 @@ public class GameplayRenderer {
     private List<HitObject> hitObjects = new ArrayList<>();
     private List<HitBurst> activeHitBursts = new ArrayList<>();
     
-    // Combo colors
-    private List<javafx.scene.paint.Color> comboColors = new ArrayList<>();
-    private int currentComboColorIndex = 0;
     
     // UI system
     private GameplayUI gameplayUI;
@@ -56,21 +54,16 @@ public class GameplayRenderer {
     private LinkedList<CursorTrailPoint> cursorTrailPoints = new LinkedList<>();
     private static final int MAX_TRAIL_POINTS = 20;
     
+    // Cursor animation state
+    private double cursorExpandScale = 1.0;  // Current expansion scale
+    private double lastHitTime = -1.0;  // Time of last hit for expansion animation
+    
     // Animation state
     private double currentTime = 0;
     private double loopDuration = 8.0;  // Total loop time
     
     // Rendering constants
-    private static final double BASE_CIRCLE_SIZE = 80;  // Increased for larger preview
-    private static final double REFERENCE_WIDTH = 800;
-    private static final double REFERENCE_HEIGHT = 600;
-    
-    // Dynamic scaling (disabled - using fixed size)
-    private double canvasScale = 1.0;
-    private double circleSize = BASE_CIRCLE_SIZE;
-    private double hitCircleScale = 1.0;
-    private double overlayScale = 1.0;
-    private double approachCircleScale = 1.0;
+    private static final double BASE_CIRCLE_SIZE = 80;  // Base size for fallback circles
     
     // Statistics
     private int combo = 0;
@@ -81,6 +74,9 @@ public class GameplayRenderer {
     private int good100 = 0;
     private int meh50 = 0;
     
+    // Combo colors from skin
+    private List<int[]> comboColors = new ArrayList<>();
+    
     public GameplayRenderer(Canvas canvas, SkinElementLoader elementLoader) {
         this.canvas = canvas;
         this.elementLoader = elementLoader;
@@ -89,38 +85,26 @@ public class GameplayRenderer {
     }
     
     public void initialize() {
+        // Get the current skin from elementLoader
+        currentSkin = elementLoader.getCurrentSkin();
+        
+        // Get combo colors from skin
+        if (currentSkin != null && currentSkin.getComboColors() != null) {
+            comboColors = currentSkin.getComboColors();
+        }
+        
         loadElements();
         gameplayUI.loadElements(elementLoader);
-        calculateCanvasScale();
-        initializeComboColors();
+        // No scaling for UI elements
+        gameplayUI.setScale(1.0);
         setupHitObjects();
         logger.info("GameplayRenderer initialized with enhanced features");
-    }
-    
-    /**
-     * Calculate scale factor based on canvas size.
-     * Currently disabled - using fixed size for preview.
-     */
-    private void calculateCanvasScale() {
-        // Fixed scale - no dynamic scaling
-        canvasScale = 1.0;
-        circleSize = BASE_CIRCLE_SIZE;
-        
-        // Recalculate element scales with the fixed circle size
-        calculateElementScales();
-        
-        // Update UI scale (fixed at 1.0)
-        gameplayUI.setScale(1.0);
-        
-        logger.debug("Using fixed scale: {} (canvas: {}x{})", 
-                    canvasScale, canvas.getWidth(), canvas.getHeight());
     }
     
     /**
      * Handle canvas resize.
      */
     public void onCanvasResize() {
-        calculateCanvasScale();
         setupHitObjects(); // Recalculate positions
     }
     
@@ -139,12 +123,18 @@ public class GameplayRenderer {
         sliderFollowCircle = elementLoader.loadImage("sliderfollowcircle");
         reverseArrow = elementLoader.loadImage("reversearrow");
         
-        // Calculate scales
-        calculateElementScales();
+        // Load numbers with custom prefix support
+        String hitCirclePrefix = "default";
+        if (currentSkin != null && currentSkin.getHitCirclePrefix() != null) {
+            hitCirclePrefix = currentSkin.getHitCirclePrefix();
+        }
         
-        // Load numbers
         for (int i = 0; i < 10; i++) {
-            defaultNumbers[i] = elementLoader.loadImage("default-" + i);
+            defaultNumbers[i] = elementLoader.loadImageWithPrefix(hitCirclePrefix, "-" + i);
+            if (defaultNumbers[i] == null) {
+                // Fallback to default if custom prefix not found
+                defaultNumbers[i] = elementLoader.loadImage("default-" + i);
+            }
         }
         
         // Load hit burst animations
@@ -196,66 +186,15 @@ public class GameplayRenderer {
         }
     }
     
-    private void calculateElementScales() {
-        // Establish consistent scaling for all elements based on hit circle
-        if (hitCircle != null) {
-            double hitCircleSize = Math.max(hitCircle.getWidth(), hitCircle.getHeight());
-            hitCircleScale = circleSize / hitCircleSize;
-            
-            // Overlay should match hit circle size exactly
-            if (hitCircleOverlay != null) {
-                double overlaySize = Math.max(hitCircleOverlay.getWidth(), hitCircleOverlay.getHeight());
-                overlayScale = circleSize / overlaySize;
-            } else {
-                overlayScale = hitCircleScale;
-            }
-            
-            // Approach circle uses same base scale
-            if (approachCircle != null) {
-                double approachSize = Math.max(approachCircle.getWidth(), approachCircle.getHeight());
-                approachCircleScale = circleSize / approachSize;
-            } else {
-                approachCircleScale = hitCircleScale;
-            }
-            
-            logger.debug("Consistent scaling established - base scale: {}", hitCircleScale);
-        } else {
-            // Fallback scaling
-            hitCircleScale = 1.0;
-            overlayScale = 1.0;
-            approachCircleScale = 1.0;
-        }
-    }
     
-    private void initializeComboColors() {
-        comboColors.clear();
-        
-        // Try to get combo colors from the current skin
-        com.osuskin.tool.model.Skin currentSkin = elementLoader.getCurrentSkin();
-        if (currentSkin != null && currentSkin.getComboColors() != null && !currentSkin.getComboColors().isEmpty()) {
-            // Use skin's combo colors
-            for (int[] rgb : currentSkin.getComboColors()) {
-                comboColors.add(javafx.scene.paint.Color.rgb(rgb[0], rgb[1], rgb[2]));
-            }
-            logger.info("Loaded {} combo colors from skin", comboColors.size());
-        } else {
-            // Use default osu! combo colors if skin doesn't specify any
-            comboColors.add(javafx.scene.paint.Color.rgb(255, 192, 0));   // Orange
-            comboColors.add(javafx.scene.paint.Color.rgb(0, 202, 0));     // Green  
-            comboColors.add(javafx.scene.paint.Color.rgb(18, 124, 255));  // Blue
-            comboColors.add(javafx.scene.paint.Color.rgb(242, 24, 57));   // Red
-            logger.info("Using default combo colors");
-        }
-        
-        currentComboColorIndex = 0;
-    }
     
     private void setupHitObjects() {
         hitObjects.clear();
-        currentComboColorIndex = 0;  // Reset color index
         
-        double width = canvas.getWidth();
-        double height = canvas.getHeight();
+        // Always use native resolution for positioning
+        // JavaFX will automatically scale when drawing to the smaller canvas
+        double width = 1366;
+        double height = 768;
         
         // Create timeline with proper spacing accounting for slider durations
         // Increased spacing between elements for better readability
@@ -306,6 +245,9 @@ public class GameplayRenderer {
     public void update(double deltaTime) {
         currentTime += deltaTime;
         
+        // Update UI animations
+        gameplayUI.update(deltaTime);
+        
         // Update hit objects
         for (HitObject obj : hitObjects) {
             double prevResult = obj.getHitResult().ordinal();
@@ -316,6 +258,9 @@ public class GameplayRenderer {
                 onHitObjectHit(obj);
             }
         }
+        
+        // Update cursor animation
+        updateCursorAnimation();
         
         // Update cursor position and trail
         updateCursor();
@@ -330,16 +275,28 @@ public class GameplayRenderer {
     }
     
     private void onHitObjectHit(HitObject obj) {
+        // Trigger cursor expansion animation if enabled
+        if (currentSkin != null && currentSkin.getCursorExpand() && 
+            obj.getHitResult() != HitObject.HitResult.MISS) {
+            lastHitTime = currentTime;
+            cursorExpandScale = 1.3;  // Expand to 130% size
+        }
+        
         // Create hit burst
         Image[] frames = hitBurstFrames.get(obj.getHitResult());
         if (frames != null) {
+            // Get animation framerate from skin
+            int animationFramerate = currentSkin != null ? 
+                currentSkin.getAnimationFramerate() : -1;
+            
             HitBurst burst = new HitBurst(
                 obj.getHitResult(),
                 obj.getX(),
                 obj.getY(),
                 currentTime,
                 frames,
-                lightingImage
+                lightingImage,
+                animationFramerate
             );
             activeHitBursts.add(burst);
         }
@@ -382,9 +339,24 @@ public class GameplayRenderer {
         }
     }
     
+    private void updateCursorAnimation() {
+        // Animate cursor expansion scale back to normal
+        if (cursorExpandScale > 1.0) {
+            double timeSinceHit = currentTime - lastHitTime;
+            // Return to normal size over 0.1 seconds
+            if (timeSinceHit < 0.1) {
+                // Smooth interpolation from 1.3 to 1.0
+                cursorExpandScale = 1.3 - (timeSinceHit / 0.1) * 0.3;
+            } else {
+                cursorExpandScale = 1.0;
+            }
+        }
+    }
+    
     private void updateCursor() {
-        double cursorX = canvas.getWidth() / 2;
-        double cursorY = canvas.getHeight() / 2;
+        // Use native resolution for cursor positioning
+        double cursorX = 1366 / 2;
+        double cursorY = 768 / 2;
         
         // Get previous cursor position for smooth interpolation
         if (!cursorTrailPoints.isEmpty()) {
@@ -404,8 +376,10 @@ public class GameplayRenderer {
                 if (slider.isActive(currentTime)) {
                     // Follow slider ball closely during active slide
                     double[] ballPos = slider.getSliderBallPosition(currentTime);
-                    cursorX = smoothInterpolate(cursorX, ballPos[0], 0.25);  // Faster tracking for slider
-                    cursorY = smoothInterpolate(cursorY, ballPos[1], 0.25);
+                    // Use higher interpolation factor for sliders to track closely
+                    double sliderTrackFactor = 0.3;
+                    cursorX = cursorX + (ballPos[0] - cursorX) * sliderTrackFactor;
+                    cursorY = cursorY + (ballPos[1] - cursorY) * sliderTrackFactor;
                     currentTarget = slider;
                     break;
                 }
@@ -423,12 +397,35 @@ public class GameplayRenderer {
         // If not following slider, move to next object more slowly
         if (currentTarget == null && nextTarget != null) {
             double timeToHit = nextTarget.getHitTime() - currentTime;
-            double moveSpeed = Math.min(1.0, Math.max(0.0, 1.0 - (timeToHit / 2.0)));
-            moveSpeed = easeInOutCubic(moveSpeed);
             
-            // Slower movement speed for more natural motion
-            cursorX = smoothInterpolate(cursorX, nextTarget.getX(), moveSpeed * 0.05);
-            cursorY = smoothInterpolate(cursorY, nextTarget.getY(), moveSpeed * 0.05);
+            // Calculate distance to target
+            double distanceX = nextTarget.getX() - cursorX;
+            double distanceY = nextTarget.getY() - cursorY;
+            double distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+            
+            // If we're very close to the target position, just stay there
+            if (distance < 3.0) {
+                cursorX = nextTarget.getX();
+                cursorY = nextTarget.getY();
+            } else {
+                // Use smooth easing based on time remaining
+                double moveSpeed = Math.min(1.0, Math.max(0.0, 1.0 - (timeToHit / 2.0)));
+                moveSpeed = easeInOutCubic(moveSpeed);
+                
+                // Scale the interpolation factor based on distance
+                // For far objects, use a higher base factor to ensure we reach them
+                double baseFactor = 0.05;
+                double distanceBoost = Math.min(0.15, distance / 500.0); // Add up to 0.15 for far objects
+                double finalFactor = (baseFactor + distanceBoost) * moveSpeed;
+                
+                // If we're running out of time, increase the factor to ensure arrival
+                if (timeToHit < 0.5 && distance > 50) {
+                    finalFactor = Math.max(finalFactor, 0.2);
+                }
+                
+                cursorX = smoothInterpolate(cursorX, nextTarget.getX(), finalFactor);
+                cursorY = smoothInterpolate(cursorY, nextTarget.getY(), finalFactor);
+            }
         }
         
         // Update cursor trail
@@ -452,11 +449,21 @@ public class GameplayRenderer {
     }
     
     public void render() {
-        // Clear canvas
+        // Save the current transform
+        gc.save();
+        
+        // Clear canvas at actual size first
         gc.setFill(Color.rgb(30, 30, 40));
         gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
         
-        // Render layers in order (bottom to top)
+        // Apply scaling transform to render at native resolution
+        // but display at canvas size
+        double scaleX = canvas.getWidth() / 1366.0;
+        double scaleY = canvas.getHeight() / 768.0;
+        gc.scale(scaleX, scaleY);
+        
+        // Now render everything at native resolution coordinates
+        // The scale transform will automatically downscale to fit
         renderHitObjects();
         renderLightingEffects();
         renderHitBursts();
@@ -464,12 +471,16 @@ public class GameplayRenderer {
         renderCursor();
         renderUI();
         renderBorder();
+        
+        // Restore the transform
+        gc.restore();
     }
     
     private void renderBorder() {
+        // Render border at native resolution
         gc.setStroke(Color.rgb(80, 80, 80));
         gc.setLineWidth(2);
-        gc.strokeRect(1, 1, canvas.getWidth() - 2, canvas.getHeight() - 2);
+        gc.strokeRect(1, 1, 1366 - 2, 768 - 2);
     }
     
     private void renderHitObjects() {
@@ -497,24 +508,37 @@ public class GameplayRenderer {
                 if (slider.isHeadVisible(currentTime) && approachCircle != null) {
                     double scale = slider.getApproachScale(currentTime);
                     if (scale > 1.0) {
-                        drawCenteredImage(approachCircle, slider.getX(), slider.getY(), approachCircleScale * scale);
+                        drawCenteredImage(approachCircle, slider.getX(), slider.getY(), scale);
                     }
                 }
                 
                 // Draw slider head circle
                 if (slider.isHeadVisible(currentTime)) {
+                    // Always draw base hitcircle first
                     if (hitCircle != null) {
-                        // Apply combo color tinting to slider head
-                        javafx.scene.paint.Color comboColor = getComboColorForObject(slider);
-                        drawCenteredImageWithTint(hitCircle, slider.getX(), slider.getY(), hitCircleScale, comboColor);
+                        drawCenteredImage(hitCircle, slider.getX(), slider.getY(), 1.0);
                     }
                     
-                    if (hitCircleOverlay != null) {
-                        drawCenteredImage(hitCircleOverlay, slider.getX(), slider.getY(), hitCircleScale);
+                    // Check layering order from skin.ini
+                    boolean overlayAboveNumber = currentSkin != null ? 
+                        currentSkin.getHitCircleOverlayAboveNumber() : true;
+                    
+                    if (!overlayAboveNumber) {
+                        // Draw overlay before number
+                        if (hitCircleOverlay != null) {
+                            drawCenteredImage(hitCircleOverlay, slider.getX(), slider.getY(), 1.0);
+                        }
                     }
                     
                     // Draw combo number on slider head
                     drawComboNumber(slider.getX(), slider.getY(), slider.getComboNumber());
+                    
+                    if (overlayAboveNumber) {
+                        // Draw overlay after number (default)
+                        if (hitCircleOverlay != null) {
+                            drawCenteredImage(hitCircleOverlay, slider.getX(), slider.getY(), 1.0);
+                        }
+                    }
                 }
                 
                 // Draw slider ball
@@ -526,24 +550,37 @@ public class GameplayRenderer {
                 if (!obj.isHit() && approachCircle != null) {
                     double scale = obj.getApproachScale(currentTime);
                     if (scale > 1.0) {
-                        drawCenteredImage(approachCircle, obj.getX(), obj.getY(), approachCircleScale * scale);
+                        drawCenteredImage(approachCircle, obj.getX(), obj.getY(), scale);
                     }
                 }
                 
                 // Draw hit circle (if not hit)
                 if (!obj.isHit()) {
+                    // Always draw base hitcircle first
                     if (hitCircle != null) {
-                        // Apply combo color tinting
-                        javafx.scene.paint.Color comboColor = getComboColorForObject(obj);
-                        drawCenteredImageWithTint(hitCircle, obj.getX(), obj.getY(), hitCircleScale, comboColor);
+                        drawCenteredImage(hitCircle, obj.getX(), obj.getY(), 1.0);
                     }
                     
-                    if (hitCircleOverlay != null) {
-                        drawCenteredImage(hitCircleOverlay, obj.getX(), obj.getY(), hitCircleScale);
+                    // Check layering order from skin.ini
+                    boolean overlayAboveNumber = currentSkin != null ? 
+                        currentSkin.getHitCircleOverlayAboveNumber() : true;
+                    
+                    if (!overlayAboveNumber) {
+                        // Draw overlay before number
+                        if (hitCircleOverlay != null) {
+                            drawCenteredImage(hitCircleOverlay, obj.getX(), obj.getY(), 1.0);
+                        }
                     }
                     
                     // Draw combo number
                     drawComboNumber(obj.getX(), obj.getY(), obj.getComboNumber());
+                    
+                    if (overlayAboveNumber) {
+                        // Draw overlay after number (default)
+                        if (hitCircleOverlay != null) {
+                            drawCenteredImage(hitCircleOverlay, obj.getX(), obj.getY(), 1.0);
+                        }
+                    }
                 }
             }
             
@@ -563,19 +600,45 @@ public class GameplayRenderer {
         double endX = slider.getEndX();
         double endY = slider.getEndY();
         
+        // Determine slider track color
+        Color trackColor = null;
+        if (currentSkin != null && currentSkin.getSliderTrackOverride() != null) {
+            // Use override color from skin.ini
+            int[] rgb = currentSkin.getSliderTrackOverride();
+            trackColor = Color.rgb(rgb[0], rgb[1], rgb[2], 0.6);
+        } else if (!comboColors.isEmpty()) {
+            // Use combo color
+            int comboIndex = (slider.getComboNumber() - 1) % comboColors.size();
+            if (comboIndex >= 0 && comboIndex < comboColors.size()) {
+                int[] rgb = comboColors.get(comboIndex);
+                trackColor = Color.rgb(rgb[0], rgb[1], rgb[2], 0.6);
+            } else {
+                trackColor = Color.rgb(180, 180, 200, 0.6);
+            }
+        } else {
+            trackColor = Color.rgb(180, 180, 200, 0.6);
+        }
+        
+        // Determine border color
+        Color borderColor = Color.rgb(255, 255, 255, 0.8);  // Default white
+        if (currentSkin != null && currentSkin.getSliderBorderColor() != null) {
+            int[] rgb = currentSkin.getSliderBorderColor();
+            borderColor = Color.rgb(rgb[0], rgb[1], rgb[2], 0.8);
+        }
+        
         // Draw slider track with proper styling
-        // Outer border (darker)
-        gc.setStroke(Color.rgb(100, 100, 120, 0.8));
-        gc.setLineWidth(circleSize + 4);
+        // Outer border
+        gc.setStroke(borderColor);
+        gc.setLineWidth(BASE_CIRCLE_SIZE + 4);
         gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
         gc.strokeLine(startX, startY, endX, endY);
         
-        // Inner track (lighter)
-        gc.setStroke(Color.rgb(180, 180, 200, 0.6));
-        gc.setLineWidth(circleSize - 4);
+        // Inner track with color
+        gc.setStroke(trackColor);
+        gc.setLineWidth(BASE_CIRCLE_SIZE - 4);
         gc.strokeLine(startX, startY, endX, endY);
         
-        // If we have sliderb texture, try to overlay it
+        // If we have sliderb texture, overlay it
         if (sliderBody != null) {
             // TODO: Implement texture tiling along path
             // For now, just use the colored lines above
@@ -584,14 +647,14 @@ public class GameplayRenderer {
         // Draw end circle for non-repeating sliders
         if (!slider.isRepeating()) {
             gc.setFill(Color.rgb(150, 150, 170, 0.5));
-            gc.fillOval(endX - circleSize/2, endY - circleSize/2, circleSize, circleSize);
+            gc.fillOval(endX - BASE_CIRCLE_SIZE/2, endY - BASE_CIRCLE_SIZE/2, BASE_CIRCLE_SIZE, BASE_CIRCLE_SIZE);
         }
         
         // Draw reverse arrow if repeating (with proper rotation)
         if (slider.isRepeating()) {
             // Calculate angle for arrow to point back towards start
             double angle = Math.atan2(startY - endY, startX - endX);
-            double arrowScale = hitCircleScale * 0.6;  // Consistent with other elements
+            double arrowScale = 1.0;  // No scaling
             
             if (reverseArrow != null) {
                 gc.save();
@@ -627,25 +690,73 @@ public class GameplayRenderer {
         gc.setGlobalAlpha(slider.getOpacity(currentTime));
         
         // Draw follow circle with consistent scaling
-        double followCircleScale = hitCircleScale * 1.2;  // Slightly larger than hit circle
         if (sliderFollowCircle != null) {
-            drawCenteredImage(sliderFollowCircle, ballPos[0], ballPos[1], followCircleScale);
+            drawCenteredImage(sliderFollowCircle, ballPos[0], ballPos[1], 1.0);
         } else {
             // Fallback follow circle
             gc.setStroke(Color.rgb(255, 255, 255, 0.3));
             gc.setLineWidth(2);
-            double followSize = circleSize * 1.2;  // Consistent with hit circle size
+            double followSize = BASE_CIRCLE_SIZE * 1.2;  // Consistent with hit circle size
             gc.strokeOval(ballPos[0] - followSize/2, ballPos[1] - followSize/2, followSize, followSize);
         }
         
-        // Draw slider ball with consistent scaling
-        double ballScale = hitCircleScale * 0.5;  // Half the size of hit circle
+        // Check if we need to flip the slider ball
+        boolean shouldFlip = currentSkin != null && currentSkin.getSliderBallFlip() && 
+                            slider.isSliderBallReversed(currentTime);
+        
+        // Apply combo color tint if enabled
+        boolean shouldTint = currentSkin != null && currentSkin.getAllowSliderBallTint();
+        
+        // Draw slider ball with flip and tint
         if (sliderBall != null) {
-            drawCenteredImage(sliderBall, ballPos[0], ballPos[1], ballScale);
+            gc.save();
+            
+            if (shouldFlip) {
+                // Flip horizontally around ball position
+                gc.translate(ballPos[0], ballPos[1]);
+                gc.scale(-1, 1);
+                gc.translate(-ballPos[0], -ballPos[1]);
+            }
+            
+            drawCenteredImage(sliderBall, ballPos[0], ballPos[1], 1.0);
+            
+            // Apply tint overlay if needed
+            if (shouldTint) {
+                // Get current combo color
+                int comboIndex = (slider.getComboNumber() - 1) % comboColors.size();
+                if (comboIndex >= 0 && comboIndex < comboColors.size()) {
+                    int[] rgb = comboColors.get(comboIndex);
+                    gc.setGlobalAlpha(0.5 * slider.getOpacity(currentTime)); // Semi-transparent tint
+                    gc.setFill(Color.rgb(rgb[0], rgb[1], rgb[2]));
+                    double ballSize = sliderBall.getWidth() / 2;
+                    gc.fillOval(ballPos[0] - ballSize, ballPos[1] - ballSize, ballSize * 2, ballSize * 2);
+                }
+            }
+            
+            gc.restore();
         } else {
-            // Fallback ball
-            double ballSize = circleSize * 0.3;  // Proportional to circle size
-            gc.setFill(Color.WHITE);
+            // Fallback ball with tint support
+            double ballSize = BASE_CIRCLE_SIZE * 0.3;
+            
+            if (shouldTint && currentSkin != null) {
+                // Use combo color or SliderBall color from skin.ini
+                int[] color = currentSkin.getSliderBallColor();
+                if (color != null) {
+                    gc.setFill(Color.rgb(color[0], color[1], color[2]));
+                } else {
+                    // Use combo color
+                    int comboIndex = (slider.getComboNumber() - 1) % comboColors.size();
+                    if (comboIndex >= 0 && comboIndex < comboColors.size()) {
+                        int[] rgb = comboColors.get(comboIndex);
+                        gc.setFill(Color.rgb(rgb[0], rgb[1], rgb[2]));
+                    } else {
+                        gc.setFill(Color.WHITE);
+                    }
+                }
+            } else {
+                gc.setFill(Color.WHITE);
+            }
+            
             gc.fillOval(ballPos[0] - ballSize, ballPos[1] - ballSize, ballSize * 2, ballSize * 2);
             gc.setStroke(Color.rgb(200, 200, 200));
             gc.setLineWidth(2);
@@ -664,7 +775,7 @@ public class GameplayRenderer {
                 Image lighting = burst.getLightingImage();
                 if (lighting != null) {
                     // Consistent scaling for lighting - based on hit circle size
-                    double baseScale = hitCircleScale * burst.getLightingScale(currentTime);
+                    double baseScale = burst.getLightingScale(currentTime);
                     drawCenteredImage(lighting, burst.getX(), burst.getY(), baseScale);
                 }
                 
@@ -682,8 +793,7 @@ public class GameplayRenderer {
                 
                 double y = burst.getY() + burst.getYOffset(currentTime);
                 // Use consistent scaling for hit bursts - smaller than hit circles
-                double burstScale = hitCircleScale * 0.7;  // 70% of hit circle size
-                drawCenteredImage(frame, burst.getX(), y, burstScale);
+                drawCenteredImage(frame, burst.getX(), y, 1.0);
                 
                 gc.restore();
             }
@@ -693,6 +803,9 @@ public class GameplayRenderer {
     private void renderCursorTrail() {
         if (cursorTrail == null || cursorTrailPoints.isEmpty()) return;
         
+        // Check CursorCentre property for trail positioning
+        boolean cursorCentre = currentSkin != null ? currentSkin.getCursorCentre() : true;
+        
         int index = 0;
         for (CursorTrailPoint point : cursorTrailPoints) {
             double age = currentTime - point.time;
@@ -701,7 +814,14 @@ public class GameplayRenderer {
             if (opacity > 0) {
                 gc.save();
                 gc.setGlobalAlpha(opacity * 0.5);  // Trail is semi-transparent
-                drawCenteredImage(cursorTrail, point.x, point.y, 0.5 * canvasScale);
+                
+                if (cursorCentre) {
+                    drawCenteredImage(cursorTrail, point.x, point.y, 1.0);
+                } else {
+                    // Top-left positioning for trail
+                    gc.drawImage(cursorTrail, point.x, point.y);
+                }
+                
                 gc.restore();
             }
             
@@ -714,10 +834,24 @@ public class GameplayRenderer {
             CursorTrailPoint current = cursorTrailPoints.getFirst();
             
             if (cursor != null) {
-                drawCenteredImage(cursor, current.x, current.y, 0.5 * canvasScale);
+                // Check CursorCentre property from skin.ini
+                boolean cursorCentre = currentSkin != null ? currentSkin.getCursorCentre() : true;
+                
+                // Apply expansion scale
+                double scale = cursorExpandScale;
+                
+                if (cursorCentre) {
+                    // Center the cursor with scaling
+                    drawCenteredImage(cursor, current.x, current.y, scale);
+                } else {
+                    // Top-left corner positioning with scaling
+                    double width = cursor.getWidth() * scale;
+                    double height = cursor.getHeight() * scale;
+                    gc.drawImage(cursor, current.x, current.y, width, height);
+                }
             } else {
-                // Fallback cursor
-                double cursorSize = 8 * canvasScale;
+                // Fallback cursor (always centered) with scaling
+                double cursorSize = 8 * cursorExpandScale;
                 gc.setFill(Color.WHITE);
                 gc.fillOval(current.x - cursorSize, current.y - cursorSize, cursorSize * 2, cursorSize * 2);
             }
@@ -725,8 +859,8 @@ public class GameplayRenderer {
     }
     
     private void renderUI() {
-        // Use the GameplayUI system for rendering
-        gameplayUI.render(canvas.getWidth(), canvas.getHeight());
+        // Use the GameplayUI system for rendering at native resolution
+        gameplayUI.render(1366, 768);
     }
     
     private void drawComboNumber(double x, double y, int number) {
@@ -734,7 +868,7 @@ public class GameplayRenderer {
         
         Image numberImage = defaultNumbers[number];
         if (numberImage != null) {
-            drawCenteredImage(numberImage, x, y, 0.5 * canvasScale);
+            drawCenteredImage(numberImage, x, y, 1.0);
         }
     }
     
@@ -746,71 +880,6 @@ public class GameplayRenderer {
         gc.drawImage(image, x - width/2, y - height/2, width, height);
     }
     
-    private void drawCenteredImageWithTint(Image image, double x, double y, double scale, javafx.scene.paint.Color tint) {
-        if (image == null) return;
-        
-        gc.save();
-        
-        // Set blend mode for tinting
-        // Note: JavaFX doesn't have a direct multiply blend mode for tinting
-        // We'll use a workaround with opacity and fill
-        
-        double width = image.getWidth() * scale;
-        double height = image.getHeight() * scale;
-        
-        // Draw the base image
-        gc.drawImage(image, x - width/2, y - height/2, width, height);
-        
-        // Apply color overlay with multiply-like effect
-        gc.setGlobalAlpha(0.7);  // Adjust for tint strength
-        gc.setFill(tint);
-        
-        // Create a clipping region for the circle shape
-        gc.save();
-        gc.beginPath();
-        gc.arc(x, y, width/2, width/2, 0, 360);
-        gc.closePath();
-        gc.clip();
-        
-        // Fill with tint color
-        gc.setGlobalBlendMode(javafx.scene.effect.BlendMode.MULTIPLY);
-        gc.fillRect(x - width/2, y - height/2, width, height);
-        gc.setGlobalBlendMode(javafx.scene.effect.BlendMode.SRC_OVER);
-        
-        gc.restore();
-        gc.restore();
-    }
-    
-    private javafx.scene.paint.Color getComboColorForObject(HitObject obj) {
-        if (comboColors.isEmpty()) {
-            return javafx.scene.paint.Color.WHITE;
-        }
-        
-        // In osu!, colors change when starting a new combo
-        // For our preview, we'll change colors every few objects
-        // and after sliders (which typically start new combos)
-        
-        boolean isNewCombo = false;
-        
-        // Check if this is the first object or follows a slider
-        int objIndex = hitObjects.indexOf(obj);
-        if (objIndex == 0) {
-            isNewCombo = true;
-        } else if (objIndex > 0) {
-            HitObject prevObj = hitObjects.get(objIndex - 1);
-            if (prevObj instanceof Slider) {
-                isNewCombo = true;
-                currentComboColorIndex = (currentComboColorIndex + 1) % comboColors.size();
-            }
-        }
-        
-        // Also change color every 3-4 circles for visual variety
-        if (obj.getComboNumber() == 1 || obj.getComboNumber() == 5) {
-            currentComboColorIndex = (currentComboColorIndex + 1) % comboColors.size();
-        }
-        
-        return comboColors.get(currentComboColorIndex);
-    }
     
     public void reset() {
         currentTime = 0;
@@ -824,6 +893,8 @@ public class GameplayRenderer {
         
         activeHitBursts.clear();
         cursorTrailPoints.clear();
+        cursorExpandScale = 1.0;
+        lastHitTime = -1.0;
         
         // Reset UI
         gameplayUI.reset();

@@ -53,6 +53,80 @@ public class Skin {
     @JsonProperty("isSpecial")
     private boolean isSpecial;  // Mark special skins like Skin Container
     
+    // === skin.ini Properties ===
+    
+    // [General] section
+    @JsonProperty("animationFramerate")
+    private Integer animationFramerate = -1;  // -1 = all frames in 1 second
+    
+    @JsonProperty("allowSliderBallTint")
+    private Boolean allowSliderBallTint = false;
+    
+    @JsonProperty("cursorCentre")
+    private Boolean cursorCentre = true;  // true = centered, false = top-left
+    
+    @JsonProperty("cursorExpand")
+    private Boolean cursorExpand = true;
+    
+    @JsonProperty("cursorRotate")
+    private Boolean cursorRotate = true;
+    
+    @JsonProperty("cursorTrailRotate")
+    private Boolean cursorTrailRotate = true;
+    
+    @JsonProperty("hitCircleOverlayAboveNumber")
+    private Boolean hitCircleOverlayAboveNumber = true;
+    
+    @JsonProperty("sliderBallFlip")
+    private Boolean sliderBallFlip = true;
+    
+    @JsonProperty("layeredHitSounds")
+    private Boolean layeredHitSounds = true;
+    
+    @JsonProperty("spinnerFadePlayfield")
+    private Boolean spinnerFadePlayfield = false;
+    
+    @JsonProperty("spinnerFrequencyModulate")
+    private Boolean spinnerFrequencyModulate = true;
+    
+    @JsonProperty("spinnerNoBlink")
+    private Boolean spinnerNoBlink = false;
+    
+    // [Colours] section - additional colors beyond combo
+    @JsonProperty("sliderBall")
+    private int[] sliderBallColor;  // RGB
+    
+    @JsonProperty("sliderBorder")
+    private int[] sliderBorderColor = {255, 255, 255};  // RGB
+    
+    @JsonProperty("sliderTrackOverride")
+    private int[] sliderTrackOverride;  // RGB, null = use combo colors
+    
+    @JsonProperty("inputOverlayText")
+    private int[] inputOverlayText = {0, 0, 0};
+    
+    @JsonProperty("spinnerBackground")
+    private int[] spinnerBackground = {100, 100, 100};
+    
+    // [Fonts] section
+    @JsonProperty("hitCirclePrefix")
+    private String hitCirclePrefix = "default";
+    
+    @JsonProperty("hitCircleOverlap")
+    private Integer hitCircleOverlap = -2;
+    
+    @JsonProperty("scorePrefix")
+    private String scorePrefix = "score";
+    
+    @JsonProperty("scoreOverlap")
+    private Integer scoreOverlap = 0;
+    
+    @JsonProperty("comboPrefix")
+    private String comboPrefix = "score";
+    
+    @JsonProperty("comboOverlap")
+    private Integer comboOverlap = 0;
+    
     public Skin() {
         this.elements = new ArrayList<>();
         this.tags = new HashSet<>();
@@ -241,6 +315,192 @@ public class Skin {
     
     public boolean hasTag(String tag) {
         return tag != null && this.tags.contains(tag.trim().toLowerCase());
+    }
+    
+    // === Getters and Setters for skin.ini properties ===
+    
+    public Integer getAnimationFramerate() {
+        return animationFramerate;
+    }
+    
+    public void setAnimationFramerate(Integer animationFramerate) {
+        this.animationFramerate = animationFramerate;
+    }
+    
+    public Boolean getAllowSliderBallTint() {
+        return allowSliderBallTint;
+    }
+    
+    public void setAllowSliderBallTint(Boolean allowSliderBallTint) {
+        this.allowSliderBallTint = allowSliderBallTint;
+    }
+    
+    public Boolean getCursorCentre() {
+        return cursorCentre;
+    }
+    
+    public void setCursorCentre(Boolean cursorCentre) {
+        this.cursorCentre = cursorCentre;
+    }
+    
+    public Boolean getCursorExpand() {
+        return cursorExpand;
+    }
+    
+    public void setCursorExpand(Boolean cursorExpand) {
+        this.cursorExpand = cursorExpand;
+    }
+    
+    public Boolean getCursorRotate() {
+        return cursorRotate;
+    }
+    
+    public void setCursorRotate(Boolean cursorRotate) {
+        this.cursorRotate = cursorRotate;
+    }
+    
+    public Boolean getCursorTrailRotate() {
+        return cursorTrailRotate;
+    }
+    
+    public void setCursorTrailRotate(Boolean cursorTrailRotate) {
+        this.cursorTrailRotate = cursorTrailRotate;
+    }
+    
+    public Boolean getHitCircleOverlayAboveNumber() {
+        return hitCircleOverlayAboveNumber;
+    }
+    
+    public void setHitCircleOverlayAboveNumber(Boolean hitCircleOverlayAboveNumber) {
+        this.hitCircleOverlayAboveNumber = hitCircleOverlayAboveNumber;
+    }
+    
+    public Boolean getSliderBallFlip() {
+        return sliderBallFlip;
+    }
+    
+    public void setSliderBallFlip(Boolean sliderBallFlip) {
+        this.sliderBallFlip = sliderBallFlip;
+    }
+    
+    public int[] getSliderBallColor() {
+        return sliderBallColor;
+    }
+    
+    public void setSliderBallColor(int[] sliderBallColor) {
+        this.sliderBallColor = sliderBallColor;
+    }
+    
+    public int[] getSliderBorderColor() {
+        return sliderBorderColor;
+    }
+    
+    public void setSliderBorderColor(int[] sliderBorderColor) {
+        this.sliderBorderColor = sliderBorderColor;
+    }
+    
+    public int[] getSliderTrackOverride() {
+        return sliderTrackOverride;
+    }
+    
+    public void setSliderTrackOverride(int[] sliderTrackOverride) {
+        this.sliderTrackOverride = sliderTrackOverride;
+    }
+    
+    public String getHitCirclePrefix() {
+        return hitCirclePrefix;
+    }
+    
+    public void setHitCirclePrefix(String hitCirclePrefix) {
+        this.hitCirclePrefix = hitCirclePrefix;
+    }
+    
+    public Integer getHitCircleOverlap() {
+        return hitCircleOverlap;
+    }
+    
+    public void setHitCircleOverlap(Integer hitCircleOverlap) {
+        this.hitCircleOverlap = hitCircleOverlap;
+    }
+    
+    public String getScorePrefix() {
+        return scorePrefix;
+    }
+    
+    public void setScorePrefix(String scorePrefix) {
+        this.scorePrefix = scorePrefix;
+    }
+    
+    public Integer getScoreOverlap() {
+        return scoreOverlap;
+    }
+    
+    public void setScoreOverlap(Integer scoreOverlap) {
+        this.scoreOverlap = scoreOverlap;
+    }
+    
+    public String getComboPrefix() {
+        return comboPrefix;
+    }
+    
+    public void setComboPrefix(String comboPrefix) {
+        this.comboPrefix = comboPrefix;
+    }
+    
+    public Integer getComboOverlap() {
+        return comboOverlap;
+    }
+    
+    public void setComboOverlap(Integer comboOverlap) {
+        this.comboOverlap = comboOverlap;
+    }
+    
+    public Boolean getLayeredHitSounds() {
+        return layeredHitSounds;
+    }
+    
+    public void setLayeredHitSounds(Boolean layeredHitSounds) {
+        this.layeredHitSounds = layeredHitSounds;
+    }
+    
+    public Boolean getSpinnerFadePlayfield() {
+        return spinnerFadePlayfield;
+    }
+    
+    public void setSpinnerFadePlayfield(Boolean spinnerFadePlayfield) {
+        this.spinnerFadePlayfield = spinnerFadePlayfield;
+    }
+    
+    public Boolean getSpinnerFrequencyModulate() {
+        return spinnerFrequencyModulate;
+    }
+    
+    public void setSpinnerFrequencyModulate(Boolean spinnerFrequencyModulate) {
+        this.spinnerFrequencyModulate = spinnerFrequencyModulate;
+    }
+    
+    public Boolean getSpinnerNoBlink() {
+        return spinnerNoBlink;
+    }
+    
+    public void setSpinnerNoBlink(Boolean spinnerNoBlink) {
+        this.spinnerNoBlink = spinnerNoBlink;
+    }
+    
+    public int[] getInputOverlayText() {
+        return inputOverlayText;
+    }
+    
+    public void setInputOverlayText(int[] inputOverlayText) {
+        this.inputOverlayText = inputOverlayText;
+    }
+    
+    public int[] getSpinnerBackground() {
+        return spinnerBackground;
+    }
+    
+    public void setSpinnerBackground(int[] spinnerBackground) {
+        this.spinnerBackground = spinnerBackground;
     }
     
     public String getDisplayInfo() {

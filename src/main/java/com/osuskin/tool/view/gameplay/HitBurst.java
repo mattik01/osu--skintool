@@ -15,20 +15,38 @@ public class HitBurst {
     
     private Image[] frames;
     private Image lightingImage;
+    private double frameDuration;  // Calculated based on AnimationFramerate
     
     private static final double ANIMATION_DURATION = 0.7;  // Total duration
-    private static final double FRAME_DURATION = 0.05;     // Duration per frame
+    private static final double DEFAULT_FRAME_DURATION = 0.05;  // Default duration per frame
     private static final double RISE_DISTANCE = 20;       // Pixels to rise during animation
     private static final double LIGHTING_DURATION = 0.4;   // Longer lighting (was 0.2)
     
     public HitBurst(HitObject.HitResult result, double x, double y, double startTime, 
                     Image[] frames, Image lightingImage) {
+        this(result, x, y, startTime, frames, lightingImage, -1);
+    }
+    
+    public HitBurst(HitObject.HitResult result, double x, double y, double startTime, 
+                    Image[] frames, Image lightingImage, int animationFramerate) {
         this.result = result;
         this.x = x;
         this.y = y;
         this.startTime = startTime;
         this.frames = frames;
         this.lightingImage = lightingImage;
+        
+        // Calculate frame duration based on AnimationFramerate setting
+        if (animationFramerate == -1 && frames != null && frames.length > 0) {
+            // -1 means play all frames in 1 second
+            this.frameDuration = 1.0 / frames.length;
+        } else if (animationFramerate > 0) {
+            // Specific framerate
+            this.frameDuration = 1.0 / animationFramerate;
+        } else {
+            // Default
+            this.frameDuration = DEFAULT_FRAME_DURATION;
+        }
     }
     
     /**
@@ -47,7 +65,7 @@ public class HitBurst {
         }
         
         double elapsed = currentTime - startTime;
-        int frameIndex = (int)(elapsed / FRAME_DURATION);
+        int frameIndex = (int)(elapsed / frameDuration);
         
         // Loop animation or stay on last frame
         if (frameIndex >= frames.length) {

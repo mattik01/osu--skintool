@@ -48,6 +48,19 @@ public class Slider extends HitObject {
     }
     
     /**
+     * Check if slider ball is currently moving backwards (for flip).
+     */
+    public boolean isSliderBallReversed(double currentTime) {
+        if (!isRepeating || currentTime < hitTime || currentTime > hitTime + duration) {
+            return false;
+        }
+        
+        double progress = (currentTime - hitTime) / duration;
+        // For repeating sliders, check if we're on the return journey
+        return progress > 0.5;
+    }
+    
+    /**
      * Get the position of the slider ball at current time.
      */
     public double[] getSliderBallPosition(double currentTime) {

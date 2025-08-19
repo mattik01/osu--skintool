@@ -4,9 +4,10 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.Group?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.osuskin.tool.controller.MainController" prefWidth="1400" prefHeight="800">
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.osuskin.tool.controller.MainController" prefWidth="1400" prefHeight="750">
    <top>
       <VBox BorderPane.alignment="CENTER">
          <children>
@@ -35,7 +36,7 @@
       </VBox>
    </top>
    <center>
-      <SplitPane dividerPositions="0.5" prefHeight="160.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <SplitPane fx:id="mainSplitPane" dividerPositions="0.4" prefHeight="160.0" prefWidth="200.0" BorderPane.alignment="CENTER">
         <items>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                <children>
@@ -77,7 +78,7 @@
                         <!-- Preview Tab -->
                         <Tab text="Preview">
                            <content>
-                              <VBox fx:id="skinDetailsPane">
+                              <VBox fx:id="skinDetailsPane" maxWidth="Infinity">
                                  <children>
                                     <!-- Skin Name Header -->
                                     <HBox alignment="CENTER_LEFT" spacing="10.0">
@@ -108,7 +109,7 @@
                                                 <Label text="Volume:" minWidth="50" />
                                                 <Slider fx:id="volumeSlider" min="0" max="100" value="50" 
                                                         showTickLabels="false" showTickMarks="false" 
-                                                        prefWidth="150" HBox.hgrow="ALWAYS" />
+                                                        maxWidth="200" HBox.hgrow="NEVER" />
                                                 <Label fx:id="lblVolume" text="50%" minWidth="35" />
                                              </children>
                                           </HBox>
@@ -136,12 +137,12 @@
                                     <Separator />
                                     
                                     <!-- Gameplay Preview Canvas -->
-                                    <VBox fx:id="previewContainer" VBox.vgrow="ALWAYS" spacing="5.0">
+                                    <VBox fx:id="previewContainer" VBox.vgrow="ALWAYS" maxWidth="Infinity" spacing="5.0">
                                        <children>
                                           <Label text="Visual Preview" styleClass="section-title" />
                                           
                                           <!-- Canvas Container -->
-                                          <StackPane VBox.vgrow="ALWAYS" styleClass="canvas-container">
+                                          <StackPane fx:id="canvasStackPane" VBox.vgrow="ALWAYS" styleClass="canvas-container" alignment="CENTER" maxWidth="Infinity" maxHeight="Infinity">
                                              <children>
                                                 <!-- Placeholder when no skin selected -->
                                                 <VBox fx:id="placeholderContainer" alignment="CENTER" spacing="10">
@@ -150,8 +151,20 @@
                                                       <Label text="Select a skin to preview" style="-fx-text-fill: #999999;" />
                                                    </children>
                                                 </VBox>
-                                                <!-- Gameplay canvas (hidden initially) -->
-                                                <Canvas fx:id="gameplayCanvas" width="600" height="450" visible="false" />
+                                                <!-- Loading indicator -->
+                                                <VBox fx:id="previewLoadingPane" alignment="CENTER" spacing="10" visible="false">
+                                                   <children>
+                                                      <Label fx:id="previewLoadingLabel" text="Loading skin..." style="-fx-text-fill: #cccccc;" />
+                                                      <ProgressBar fx:id="previewProgressBar" prefWidth="300.0" />
+                                                   </children>
+                                                </VBox>
+                                                <!-- Canvas wrapped in Group for proper scaling -->
+                                                <Group fx:id="canvasGroup" visible="false">
+                                                   <children>
+                                                      <!-- Gameplay canvas - fixed size, half of native resolution -->
+                                                      <Canvas fx:id="gameplayCanvas" width="683" height="384" />
+                                                   </children>
+                                                </Group>
                                              </children>
                                           </StackPane>
                                        </children>

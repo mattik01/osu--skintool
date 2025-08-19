@@ -39,14 +39,8 @@ public class SimpleGameplayRenderer {
     
     // Constants
     private static final double CIRCLE_SIZE = 64; // Base circle size for gameplay
-    private static final double REFERENCE_SIZE = 128; // Reference size for scaling calculations
     private static final double APPROACH_TIME = 0.8; // Time for approach circle animation
     private static final double FADE_TIME = 0.3; // Time for fade out after hit
-    
-    // Calculated scales for consistent rendering
-    private double hitCircleScale = 1.0;
-    private double overlayScale = 1.0;
-    private double approachCircleScale = 1.0;
     
     public SimpleGameplayRenderer(Canvas canvas, SkinElementLoader elementLoader) {
         this.canvas = canvas;
@@ -66,9 +60,6 @@ public class SimpleGameplayRenderer {
         hitCircleOverlay = elementLoader.loadImage("hitcircleoverlay");
         approachCircle = elementLoader.loadImage("approachcircle");
         
-        // Calculate proper scales based on actual image sizes
-        calculateElementScales();
-        
         // Load cursor
         cursor = elementLoader.loadImage("cursor");
         cursorTrail = elementLoader.loadImage("cursortrail");
@@ -82,36 +73,6 @@ public class SimpleGameplayRenderer {
                     hitCircle != null, hitCircleOverlay != null, approachCircle != null);
     }
     
-    private void calculateElementScales() {
-        // Base scale on hitcircle size
-        if (hitCircle != null) {
-            // Calculate how much to scale hitcircle to reach our target size
-            double hitCircleSize = Math.max(hitCircle.getWidth(), hitCircle.getHeight());
-            hitCircleScale = CIRCLE_SIZE / hitCircleSize;
-            
-            // Overlay should use the same scale regardless of its actual size
-            // This ensures overlay always matches hitcircle
-            overlayScale = hitCircleScale;
-            if (hitCircleOverlay != null) {
-                // If overlay is a different size, we still use hitcircle's scale
-                double overlaySize = Math.max(hitCircleOverlay.getWidth(), hitCircleOverlay.getHeight());
-                // Adjust if overlay needs to match hitcircle's rendered size
-                overlayScale = (CIRCLE_SIZE / overlaySize) * (hitCircleSize / REFERENCE_SIZE);
-            }
-            
-            // Approach circle should be scaled relative to hitcircle
-            approachCircleScale = hitCircleScale;
-            if (approachCircle != null) {
-                // Approach circle might have a different base size
-                // but should render at the same size as hitcircle when fully shrunk
-                double approachSize = Math.max(approachCircle.getWidth(), approachCircle.getHeight());
-                approachCircleScale = CIRCLE_SIZE / approachSize;
-            }
-            
-            logger.debug("Calculated scales - hitCircle: {}, overlay: {}, approach: {}",
-                        hitCircleScale, overlayScale, approachCircleScale);
-        }
-    }
     
     private void setupHitCircles() {
         hitCircles.clear();
@@ -172,8 +133,8 @@ public class SimpleGameplayRenderer {
         if (!circle.isHit() && approachCircle != null) {
             double approachProgress = circle.getApproachScale();
             if (approachProgress > 1.0) {
-                // Apply the base approach scale and multiply by progress
-                drawCenteredImage(approachCircle, circle.x, circle.y, approachCircleScale * approachProgress);
+                // Draw approach circle with progress animation
+                drawCenteredImage(approachCircle, circle.x, circle.y, approachProgress);
             }
         }
         
@@ -181,7 +142,7 @@ public class SimpleGameplayRenderer {
         if (!circle.isHit()) {
             // Draw hitcircle base
             if (hitCircle != null) {
-                drawCenteredImage(hitCircle, circle.x, circle.y, hitCircleScale);
+                drawCenteredImage(hitCircle, circle.x, circle.y, 1.0);
             } else {
                 // Fallback circle if image not found
                 gc.setFill(Color.rgb(100, 150, 200));
@@ -191,9 +152,9 @@ public class SimpleGameplayRenderer {
                 gc.strokeOval(circle.x - CIRCLE_SIZE/2, circle.y - CIRCLE_SIZE/2, CIRCLE_SIZE, CIRCLE_SIZE);
             }
             
-            // Draw overlay with same scale as hitcircle to ensure they match
+            // Draw overlay
             if (hitCircleOverlay != null) {
-                drawCenteredImage(hitCircleOverlay, circle.x, circle.y, hitCircleScale);
+                drawCenteredImage(hitCircleOverlay, circle.x, circle.y, 1.0);
             }
             
             // Draw combo number
@@ -214,7 +175,7 @@ public class SimpleGameplayRenderer {
         
         Image numberImage = defaultNumbers[number];
         if (numberImage != null) {
-            drawCenteredImage(numberImage, x, y, 0.5);
+            drawCenteredImage(numberImage, x, y, 1.0);
         } else {
             // Fallback text rendering
             gc.setFill(Color.WHITE);
@@ -231,7 +192,7 @@ public class SimpleGameplayRenderer {
         double cursorY = canvas.getHeight() * 0.5 + Math.sin(t * Math.PI * 2) * 100;
         
         if (cursor != null) {
-            drawCenteredImage(cursor, cursorX, cursorY, 0.5);
+            drawCenteredImage(cursor, cursorX, cursorY, 1.0);
         } else {
             // Fallback cursor
             gc.setFill(Color.WHITE);

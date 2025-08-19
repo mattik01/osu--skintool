@@ -237,31 +237,99 @@ public class SkinScannerService {
                 case "name" -> skin.setName(value.isEmpty() ? skin.getName() : value);
                 case "author" -> skin.setAuthor(value);
                 case "version" -> skin.setVersion(value);
+                case "animationframerate" -> {
+                    try {
+                        skin.setAnimationFramerate(Integer.parseInt(value));
+                    } catch (NumberFormatException e) {
+                        logger.debug("Invalid AnimationFramerate: {}", value);
+                    }
+                }
+                case "allowsliderballtint" -> skin.setAllowSliderBallTint(parseBoolean(value));
+                case "cursorcentre" -> skin.setCursorCentre(parseBoolean(value));
+                case "cursorexpand" -> skin.setCursorExpand(parseBoolean(value));
+                case "cursorrotate" -> skin.setCursorRotate(parseBoolean(value));
+                case "cursortrailrotate" -> skin.setCursorTrailRotate(parseBoolean(value));
+                case "hitcircleoverlayabovenumber", "hitcircleoverlayabovenumer" -> // Support typo
+                    skin.setHitCircleOverlayAboveNumber(parseBoolean(value));
+                case "sliderballflip" -> skin.setSliderBallFlip(parseBoolean(value));
+                case "layeredhitsounds" -> skin.setLayeredHitSounds(parseBoolean(value));
+                case "spinnerfadeplayfield" -> skin.setSpinnerFadePlayfield(parseBoolean(value));
+                case "spinnerfrequencymodulate" -> skin.setSpinnerFrequencyModulate(parseBoolean(value));
+                case "spinnernoblink" -> skin.setSpinnerNoBlink(parseBoolean(value));
             }
         } else if ("Colours".equalsIgnoreCase(section) || "Colors".equalsIgnoreCase(section)) {
+            String lowerKey = key.toLowerCase();
+            
             // Parse combo colors (Combo1, Combo2, etc.)
-            if (key.toLowerCase().startsWith("combo")) {
-                try {
-                    // Parse RGB values (format: "R,G,B" or "R , G , B")
-                    String[] rgb = value.split(",");
-                    if (rgb.length == 3) {
-                        int r = Integer.parseInt(rgb[0].trim());
-                        int g = Integer.parseInt(rgb[1].trim());
-                        int b = Integer.parseInt(rgb[2].trim());
-                        
-                        // Clamp values to 0-255
-                        r = Math.max(0, Math.min(255, r));
-                        g = Math.max(0, Math.min(255, g));
-                        b = Math.max(0, Math.min(255, b));
-                        
-                        skin.addComboColor(r, g, b);
-                        logger.debug("Added combo color: RGB({},{},{})", r, g, b);
+            if (lowerKey.startsWith("combo") && Character.isDigit(lowerKey.charAt(lowerKey.length() - 1))) {
+                parseColorValue(value).ifPresent(rgb -> {
+                    skin.addComboColor(rgb[0], rgb[1], rgb[2]);
+                    logger.debug("Added combo color: RGB({},{},{})", rgb[0], rgb[1], rgb[2]);
+                });
+            } else {
+                // Parse other color properties
+                switch (lowerKey) {
+                    case "sliderball" -> parseColorValue(value).ifPresent(skin::setSliderBallColor);
+                    case "sliderborder" -> parseColorValue(value).ifPresent(skin::setSliderBorderColor);
+                    case "slidertrackoverride" -> parseColorValue(value).ifPresent(skin::setSliderTrackOverride);
+                    case "inputoverlaytext" -> parseColorValue(value).ifPresent(skin::setInputOverlayText);
+                    case "spinnerbackground" -> parseColorValue(value).ifPresent(skin::setSpinnerBackground);
+                }
+            }
+        } else if ("Fonts".equalsIgnoreCase(section)) {
+            switch (key.toLowerCase()) {
+                case "hitcircleprefix" -> skin.setHitCirclePrefix(value);
+                case "hitcircleoverlap" -> {
+                    try {
+                        skin.setHitCircleOverlap(Integer.parseInt(value));
+                    } catch (NumberFormatException e) {
+                        logger.debug("Invalid HitCircleOverlap: {}", value);
                     }
-                } catch (NumberFormatException e) {
-                    logger.warn("Invalid combo color format in skin.ini: {} = {}", key, value);
+                }
+                case "scoreprefix" -> skin.setScorePrefix(value);
+                case "scoreoverlap" -> {
+                    try {
+                        skin.setScoreOverlap(Integer.parseInt(value));
+                    } catch (NumberFormatException e) {
+                        logger.debug("Invalid ScoreOverlap: {}", value);
+                    }
+                }
+                case "comboprefix" -> skin.setComboPrefix(value);
+                case "combooverlap" -> {
+                    try {
+                        skin.setComboOverlap(Integer.parseInt(value));
+                    } catch (NumberFormatException e) {
+                        logger.debug("Invalid ComboOverlap: {}", value);
+                    }
                 }
             }
         }
+    }
+    
+    private boolean parseBoolean(String value) {
+        return "1".equals(value) || "true".equalsIgnoreCase(value);
+    }
+    
+    private Optional<int[]> parseColorValue(String value) {
+        try {
+            // Parse RGB values (format: "R,G,B" or "R , G , B")
+            String[] parts = value.split(",");
+            if (parts.length >= 3) {
+                int r = Integer.parseInt(parts[0].trim());
+                int g = Integer.parseInt(parts[1].trim());
+                int b = Integer.parseInt(parts[2].trim());
+                
+                // Clamp values to 0-255
+                r = Math.max(0, Math.min(255, r));
+                g = Math.max(0, Math.min(255, g));
+                b = Math.max(0, Math.min(255, b));
+                
+                return Optional.of(new int[]{r, g, b});
+            }
+        } catch (NumberFormatException e) {
+            logger.debug("Invalid color format: {}", value);
+        }
+        return Optional.empty();
     }
     
     private void scanSkinElements(Skin skin, Path skinDirectory) throws IOException {

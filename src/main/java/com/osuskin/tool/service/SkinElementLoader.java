@@ -66,7 +66,8 @@ public class SkinElementLoader {
     }
     
     /**
-     * Load an image element, trying different extensions and HD versions.
+     * Load an image element, trying different extensions.
+     * Prefers standard versions over @2x HD versions.
      * Falls back to default skin if not found.
      */
     public Image loadImage(String elementName) {
@@ -76,12 +77,12 @@ public class SkinElementLoader {
         
         Image image = null;
         
-        // Try HD version first (@2x)
-        image = tryLoadImage(elementName + "@2x");
+        // Try standard version first (preferred)
+        image = tryLoadImage(elementName);
         
-        // Try standard version
+        // Try HD version if standard not found (@2x)
         if (image == null) {
-            image = tryLoadImage(elementName);
+            image = tryLoadImage(elementName + "@2x");
         }
         
         // Try default skin from file system if configured
@@ -101,6 +102,24 @@ public class SkinElementLoader {
         }
         
         return image;
+    }
+    
+    /**
+     * Load image with custom prefix support for fonts.
+     */
+    public Image loadImageWithPrefix(String prefix, String suffix) {
+        if (prefix == null || suffix == null) return null;
+        
+        // Try with custom prefix first
+        String customName = prefix + suffix;
+        Image result = loadImage(customName);
+        
+        // If not found and prefix isn't default, try default prefix
+        if (result == null && !prefix.equals("default") && !prefix.equals("score")) {
+            result = loadImage("default" + suffix);
+        }
+        
+        return result;
     }
     
     /**
@@ -135,7 +154,7 @@ public class SkinElementLoader {
                 frame = tryLoadImage(frameName);
             }
             
-            // Also try @2x versions
+            // Also try @2x versions if standard not found
             if (frame == null) {
                 frame = tryLoadImage(elementName + "-" + frameIndex + "@2x");
             }

@@ -5,7 +5,7 @@ import com.osuskin.tool.model.Configuration;
 import com.osuskin.tool.model.ElementGroup;
 import com.osuskin.tool.model.Skin;
 import com.osuskin.tool.model.SkinContainer;
-import com.osuskin.tool.service.SkinScannerService;
+import com.osuskin.tool.service.LazyLoadingSkinService;
 import com.osuskin.tool.service.SkinContainerService;
 import com.osuskin.tool.service.SkinElementLoader;
 import com.osuskin.tool.view.SimpleGameplayRenderer;
@@ -21,8 +21,11 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.Group;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -68,6 +71,7 @@ public class MainController implements Initializable {
     @FXML private TextField txtSearch;
     
     // Main content
+    @FXML private SplitPane mainSplitPane;
     @FXML private ListView<Skin> listSkins;
     @FXML private Label lblSkinCount;
     @FXML private Label lblCompressedCount;
@@ -80,6 +84,7 @@ public class MainController implements Initializable {
     @FXML private Label lblElementInfo;
     @FXML private VBox previewContainer;
     @FXML private VBox placeholderContainer;
+    @FXML private StackPane canvasStackPane;  // The StackPane that contains the canvas
     
     // Audio Controls
     @FXML private Slider volumeSlider;
@@ -91,6 +96,10 @@ public class MainController implements Initializable {
     
     // Gameplay Preview
     @FXML private Canvas gameplayCanvas;
+    @FXML private Group canvasGroup;
+    @FXML private VBox previewLoadingPane;
+    @FXML private Label previewLoadingLabel;
+    @FXML private ProgressBar previewProgressBar;
     
     // Selection Tab Components
     @FXML private VBox selectionSection;
@@ -115,11 +124,12 @@ public class MainController implements Initializable {
     
     // Services and data
     private ConfigurationManager configurationManager;
-    private SkinScannerService skinScannerService;
+    private LazyLoadingSkinService lazyLoadingService; // Using lazy loading service
     private SkinContainerService skinContainerService;
     private ObservableList<Skin> allSkins;
     private FilteredList<Skin> filteredSkins;
     private SortedList<Skin> sortedSkins;
+    private Task<Void> currentLoadingTask;
     
     // Preview components
     private SkinElementLoader elementLoader;
@@ -171,6 +181,12 @@ public class MainController implements Initializable {
         // Initially hide preview controls
         hidePreviewControls();
         
+        // Force initial layout calculation
+        if (canvasStackPane != null) {
+            canvasStackPane.setMinHeight(200);  // Minimum height to prevent collapse
+            canvasStackPane.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        }
+        
         // Initialize skin container service
         skinContainerService = new SkinContainerService();
         
@@ -179,7 +195,7 @@ public class MainController implements Initializable {
     
     public void setConfigurationManager(ConfigurationManager configurationManager) {
         this.configurationManager = configurationManager;
-        this.skinScannerService = new SkinScannerService(configurationManager);
+        this.lazyLoadingService = new LazyLoadingSkinService();
         this.skinContainerService = new SkinContainerService();
         
         // Update UI based on configuration
@@ -298,8 +314,49 @@ public class MainController implements Initializable {
     private void onSkinSelected(MouseEvent event) {
         Skin selectedSkin = listSkins.getSelectionModel().getSelectedItem();
         if (selectedSkin != null) {
-            displaySkinPreview(selectedSkin);
-            updateSelectionUI();  // Update Selection tab UI
+            // Run all loading operations asynchronously to avoid blocking UI
+            Platform.runLater(() -> {
+                // Cancel any existing loading
+                if (lazyLoadingService != null) {
+                    lazyLoadingService.cancelCurrentLoading();
+                }
+                
+                // Show loading indicator immediately
+                showLoadingIndicator();
+                
+                // Start lazy loading with progress - this runs in a separate thread
+                currentLoadingTask = lazyLoadingService.createProgressiveLoadTask(selectedSkin, () -> {
+                    // This callback is already wrapped in Platform.runLater by the service
+                    // Just update the preview
+                    displaySkinPreview(selectedSkin);
+                });
+                
+                // Bind progress indicators
+                if (previewProgressBar != null && currentLoadingTask != null) {
+                    previewProgressBar.progressProperty().bind(currentLoadingTask.progressProperty());
+                }
+                if (previewLoadingLabel != null && currentLoadingTask != null) {
+                    previewLoadingLabel.textProperty().bind(currentLoadingTask.messageProperty());
+                }
+                
+                // Handle task completion
+                currentLoadingTask.setOnSucceeded(e -> {
+                    hideLoadingIndicator();
+                    displaySkinPreview(selectedSkin);
+                    updateSelectionUI();
+                });
+                
+                currentLoadingTask.setOnCancelled(e -> {
+                    hideLoadingIndicator();
+                    logger.debug("Skin loading cancelled");
+                });
+                
+                currentLoadingTask.setOnFailed(e -> {
+                    hideLoadingIndicator();
+                    logger.error("Failed to load skin", currentLoadingTask.getException());
+                    showAlert("Error", "Failed to load skin: " + currentLoadingTask.getException().getMessage());
+                });
+            });
         }
     }
     
@@ -397,6 +454,13 @@ public class MainController implements Initializable {
     
     @FXML
     private void onExit() {
+        // Clean up resources before exit
+        if (lazyLoadingService != null) {
+            lazyLoadingService.shutdown();
+        }
+        if (currentLoadingTask != null && currentLoadingTask.isRunning()) {
+            currentLoadingTask.cancel();
+        }
         Platform.exit();
     }
     
@@ -406,12 +470,18 @@ public class MainController implements Initializable {
             return;
         }
         
-        lblStatus.setText("Scanning skins...");
+        lblStatus.setText("Quick scanning skins...");
         progressBar.setVisible(true);
-        progressBar.progressProperty().unbind(); // Unbind any existing binding
-        progressBar.setProgress(-1); // Indeterminate progress
+        progressBar.progressProperty().unbind();
+        progressBar.setProgress(-1);
         
-        Task<List<Skin>> scanTask = skinScannerService.createScanTask();
+        Task<List<Skin>> scanTask = new Task<List<Skin>>() {
+            @Override
+            protected List<Skin> call() throws Exception {
+                Path skinsDir = config.getOsuSkinsDirectoryPath();
+                return lazyLoadingService.quickScanDirectory(skinsDir);
+            }
+        };
         
         scanTask.setOnSucceeded(event -> {
             List<Skin> scannedSkins = scanTask.getValue();
@@ -494,7 +564,7 @@ public class MainController implements Initializable {
         lblSkinCount.setText(String.valueOf(filteredSkins.size()));
         
         // Update compressed count and extract button
-        int compressedCount = skinScannerService.getCompressedSkinCount();
+        int compressedCount = 0; // Extraction not supported in lazy loading mode
         if (compressedCount > 0) {
             lblCompressedCount.setText("(" + compressedCount + " compressed)");
             lblCompressedCount.setVisible(true);
@@ -517,20 +587,13 @@ public class MainController implements Initializable {
     }
     
     private void setupCanvasResizeListener() {
-        if (gameplayCanvas != null) {
-            // Listen for canvas size changes
-            gameplayCanvas.widthProperty().addListener((obs, oldVal, newVal) -> {
-                if (enhancedRenderer != null) {
-                    enhancedRenderer.onCanvasResize();
-                }
-            });
-            
-            gameplayCanvas.heightProperty().addListener((obs, oldVal, newVal) -> {
-                if (enhancedRenderer != null) {
-                    enhancedRenderer.onCanvasResize();
-                }
-            });
-        }
+        // No dynamic resizing needed - canvas is fixed size
+        // The canvas is already set to 683x384 in FXML
+        // which is exactly half of native 1366x768 resolution
+    }
+    
+    private void scaleCanvasToFitContainer() {
+        // Not used anymore - canvas is fixed size
     }
     
     private void hidePreviewControls() {
@@ -538,12 +601,36 @@ public class MainController implements Initializable {
         if (placeholderContainer != null) {
             placeholderContainer.setVisible(true);
         }
-        if (gameplayCanvas != null) {
-            gameplayCanvas.setVisible(false);
+        if (canvasGroup != null) {
+            canvasGroup.setVisible(false);
         }
         // Hide audio controls
         if (volumeSlider != null && volumeSlider.getParent() != null) {
             volumeSlider.getParent().getParent().setVisible(false);
+        }
+    }
+    
+    private void showLoadingIndicator() {
+        if (placeholderContainer != null) {
+            placeholderContainer.setVisible(false);
+        }
+        if (previewLoadingPane != null) {
+            previewLoadingPane.setVisible(true);
+        }
+        if (canvasGroup != null) {
+            canvasGroup.setVisible(false);
+        }
+    }
+    
+    private void hideLoadingIndicator() {
+        if (previewLoadingPane != null) {
+            previewLoadingPane.setVisible(false);
+        }
+        if (placeholderContainer != null) {
+            placeholderContainer.setVisible(false);
+        }
+        if (canvasGroup != null) {
+            canvasGroup.setVisible(true);
         }
     }
     
@@ -552,8 +639,15 @@ public class MainController implements Initializable {
         if (placeholderContainer != null) {
             placeholderContainer.setVisible(false);
         }
-        if (gameplayCanvas != null) {
-            gameplayCanvas.setVisible(true);
+        if (canvasGroup != null) {
+            canvasGroup.setVisible(true);
+            // Force layout and ensure proper scaling when showing
+            if (canvasStackPane != null) {
+                canvasStackPane.requestLayout();
+            }
+            Platform.runLater(() -> {
+                Platform.runLater(this::scaleCanvasToFitContainer);
+            });
         }
         // Show audio controls
         if (volumeSlider != null && volumeSlider.getParent() != null) {
@@ -590,11 +684,18 @@ public class MainController implements Initializable {
         
         // Initialize and start autoplay animation without preloading
         Platform.runLater(() -> {
+            // Ensure canvas is properly scaled FIRST
+            scaleCanvasToFitContainer();
+            
+            // Then initialize renderers with correct canvas dimensions
             if (useEnhancedRenderer) {
                 enhancedRenderer.initialize();
+                enhancedRenderer.onCanvasResize(); // Notify about canvas size
             } else {
                 simpleRenderer.initialize();
             }
+            
+            // Finally start the animation
             startAutoplayAnimation();
         });
     }
@@ -774,71 +875,8 @@ public class MainController implements Initializable {
     
     @FXML
     private void onExtractCompressed() {
-        if (skinScannerService == null) {
-            showAlert("Error", "Scanner service not available");
-            return;
-        }
-        
-        List<Path> compressedFiles = skinScannerService.getExtractableCompressedSkinFiles();
-        if (compressedFiles.isEmpty()) {
-            showAlert("Info", "No extractable compressed skin files found.\nAll compressed files have already been extracted.");
-            return;
-        }
-        
-        // Show progress and extract files
-        lblStatus.setText("Extracting compressed skins...");
-        progressBar.setVisible(true);
-        progressBar.progressProperty().unbind(); // Unbind any existing binding
-        progressBar.setProgress(-1); // Indeterminate progress
-        
-        Task<Void> extractTask = new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                int extracted = 0;
-                int total = compressedFiles.size();
-                
-                for (int i = 0; i < total; i++) {
-                    Path compressedFile = compressedFiles.get(i);
-                    updateProgress(i, total);
-                    
-                    try {
-                        if (skinScannerService.extractCompressedSkin(compressedFile)) {
-                            extracted++;
-                            logger.info("Successfully extracted: {}", compressedFile.getFileName());
-                        } else {
-                            logger.warn("Failed to extract: {}", compressedFile.getFileName());
-                        }
-                    } catch (Exception e) {
-                        logger.error("Error extracting: {}", compressedFile.getFileName(), e);
-                    }
-                }
-                
-                final int finalExtracted = extracted;
-                Platform.runLater(() -> {
-                    progressBar.setVisible(false);
-                    lblStatus.setText("Ready");
-                    
-                    if (finalExtracted > 0) {
-                        showInfo("Success", 
-                               String.format("Successfully extracted %d of %d compressed skin files", 
-                                           finalExtracted, total));
-                        
-                        // Refresh the skin list to show newly extracted skins
-                        startSkinScan();
-                    } else {
-                        showAlert("Warning", "No files were extracted successfully");
-                    }
-                });
-                
-                return null;
-            }
-        };
-        
-        progressBar.progressProperty().bind(extractTask.progressProperty());
-        
-        Thread extractThread = new Thread(extractTask);
-        extractThread.setDaemon(true);
-        extractThread.start();
+        // Extraction not supported in lazy loading mode for minimal footprint
+        showAlert("Info", "Extraction is not supported in lightweight mode.\nPlease extract compressed skins manually.");
     }
     
     // Selection Tab Handler Methods
@@ -1155,7 +1193,7 @@ public class MainController implements Initializable {
                 // Rescan the container
                 try {
                     containerSkin.getElements().clear();
-                    skinScannerService.scanSkin(containerPathObj);
+                    // Rescan not needed in lazy loading mode - elements loaded on demand
                     
                     // Update preview if selected
                     Skin selectedSkin = listSkins.getSelectionModel().getSelectedItem();
