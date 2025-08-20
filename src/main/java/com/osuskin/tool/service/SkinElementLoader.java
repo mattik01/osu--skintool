@@ -104,6 +104,34 @@ public class SkinElementLoader {
     }
     
     /**
+     * Load an image element without falling back to default skin.
+     * Only loads from the current skin directory.
+     */
+    public Image loadImageNoFallback(String elementName) {
+        if (imageCache.containsKey(elementName + "_nofallback")) {
+            return imageCache.get(elementName + "_nofallback");
+        }
+        
+        Image image = null;
+        
+        // Try standard version first (preferred)
+        image = tryLoadImage(elementName);
+        
+        // Try HD version if standard not found (@2x)
+        if (image == null) {
+            image = tryLoadImage(elementName + "@2x");
+        }
+        
+        // Don't fall back to default skin
+        
+        if (image != null) {
+            imageCache.put(elementName + "_nofallback", image);
+        }
+        
+        return image;
+    }
+    
+    /**
      * Load image with custom prefix support for fonts.
      */
     public Image loadImageWithPrefix(String prefix, String suffix) {

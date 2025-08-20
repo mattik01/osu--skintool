@@ -7,6 +7,7 @@ import com.osuskin.tool.model.SkinContainer;
 import com.osuskin.tool.service.LazyLoadingSkinService;
 import com.osuskin.tool.service.SkinContainerService;
 import com.osuskin.tool.service.SkinElementLoader;
+import com.osuskin.tool.service.AudioMixerService;
 import com.osuskin.tool.view.SimpleGameplayRenderer;
 import com.osuskin.tool.view.gameplay.GameplayRenderer;
 import com.osuskin.tool.util.ConfigurationManager;
@@ -80,6 +81,12 @@ public class MainController implements Initializable {
     @FXML private StackPane canvasStackPane;  // The StackPane that contains the canvas
     
     // Audio Controls
+    @FXML private ComboBox<String> sampleSelector;
+    @FXML private ToggleButton btnPlayPause;
+    @FXML private CheckBox loopCheckbox;
+    @FXML private Slider masterVolumeSlider;
+    @FXML private Label lblMasterVolume;
+    @FXML private Slider mixBalanceSlider;
     @FXML private Slider volumeSlider;
     @FXML private Label lblVolume;
     @FXML private Button btnPlayHitsounds;
@@ -132,6 +139,7 @@ public class MainController implements Initializable {
     private MediaPlayer currentAudioPlayer;
     private List<MediaPlayer> hitsoundPlayers = new ArrayList<>();
     private AnimationTimer animationTimer;
+    private AudioMixerService audioMixerService;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -180,6 +188,10 @@ public class MainController implements Initializable {
         
         // Initialize skin container service
         skinContainerService = new SkinContainerService();
+        
+        // Initialize audio mixer service
+        audioMixerService = new AudioMixerService();
+        setupAudioMixerControls();
         
         logger.info("MainController initialization completed");
     }
@@ -575,6 +587,83 @@ public class MainController implements Initializable {
         }
     }
     
+    private void setupAudioMixerControls() {
+        // Populate sample selector
+        if (sampleSelector != null) {
+            updateSampleList();
+            sampleSelector.setOnAction(e -> {
+                String selected = sampleSelector.getValue();
+                if (selected != null) {
+                    logger.info("Sample selected: {}", selected);
+                    audioMixerService.loadSample(selected);
+                    updatePlayPauseButton();
+                    // Auto-load the first sample but don't auto-play
+                }
+            });
+        }
+        
+        // Setup master volume slider
+        if (masterVolumeSlider != null) {
+            masterVolumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+                double volume = newValue.doubleValue() / 100.0;
+                lblMasterVolume.setText(String.format("%.0f%%", newValue.doubleValue()));
+                audioMixerService.setMasterVolume(volume);
+            });
+        }
+        
+        // Setup mix balance slider (0 = full music, 100 = full hitsounds)
+        if (mixBalanceSlider != null) {
+            mixBalanceSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+                double balance = newValue.doubleValue() / 100.0;
+                audioMixerService.setOriginalMixLevel(1.0 - balance);
+                audioMixerService.setHitsoundMixLevel(balance);
+            });
+        }
+        
+        // Setup loop checkbox
+        if (loopCheckbox != null) {
+            loopCheckbox.setSelected(true);
+        }
+    }
+    
+    private void updateSampleList() {
+        if (sampleSelector != null) {
+            List<AudioMixerService.BeatmapSample> samples = audioMixerService.getAvailableSamples();
+            ObservableList<String> sampleNames = FXCollections.observableArrayList();
+            for (AudioMixerService.BeatmapSample sample : samples) {
+                sampleNames.add(sample.name);
+            }
+            sampleSelector.setItems(sampleNames);
+            if (!sampleNames.isEmpty()) {
+                String firstSample = sampleNames.get(0);
+                sampleSelector.setValue(firstSample);
+                // Auto-load the first sample
+                audioMixerService.loadSample(firstSample);
+                updatePlayPauseButton();
+            }
+        }
+    }
+    
+    @FXML
+    private void onTogglePlayPause() {
+        logger.info("Toggle play/pause button clicked");
+        audioMixerService.togglePlayPause();
+        updatePlayPauseButton();
+    }
+    
+    @FXML
+    private void onLoopChanged() {
+        if (loopCheckbox != null) {
+            audioMixerService.setLooping(loopCheckbox.isSelected());
+        }
+    }
+    
+    private void updatePlayPauseButton() {
+        if (btnPlayPause != null) {
+            btnPlayPause.setText(audioMixerService.isPlaying() ? "⏸" : "▶");
+        }
+    }
+    
     private void setupCanvasResizeListener() {
         // No dynamic resizing needed - canvas is fixed size
         // The canvas is already set to 683x384 in FXML
@@ -659,6 +748,9 @@ public class MainController implements Initializable {
         Path skinPath = skin.getDirectoryPathAsPath();
         elementLoader = new SkinElementLoader(skinPath);
         elementLoader.setCurrentSkin(skin);  // Pass skin for combo colors
+        
+        // Set element loader for audio mixer service
+        audioMixerService.setElementLoader(elementLoader);
         
         // Initialize appropriate renderer based on setting
         if (useEnhancedRenderer) {

@@ -103,18 +103,43 @@
                                        <children>
                                           <Label text="Audio Preview" styleClass="section-title" />
                                           
-                                          <!-- Volume Control -->
+                                          <!-- Beatmap Sample Selection -->
                                           <HBox alignment="CENTER_LEFT" spacing="10.0">
                                              <children>
-                                                <Label text="Volume:" minWidth="50" />
-                                                <Slider fx:id="volumeSlider" min="0" max="100" value="50" 
-                                                        showTickLabels="false" showTickMarks="false" 
-                                                        maxWidth="200" HBox.hgrow="NEVER" />
-                                                <Label fx:id="lblVolume" text="50%" minWidth="35" />
+                                                <Label text="Sample:" minWidth="50" />
+                                                <ComboBox fx:id="sampleSelector" prefWidth="200" promptText="Select beatmap sample" />
+                                                <ToggleButton fx:id="btnPlayPause" text="▶" prefWidth="40" onAction="#onTogglePlayPause" />
+                                                <CheckBox fx:id="loopCheckbox" text="Loop" selected="true" onAction="#onLoopChanged" />
                                              </children>
                                           </HBox>
                                           
-                                          <!-- Sound Buttons -->
+                                          <!-- Master Volume Control -->
+                                          <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                             <children>
+                                                <Label text="Master:" minWidth="50" />
+                                                <Slider fx:id="masterVolumeSlider" min="0" max="100" value="50" 
+                                                        showTickLabels="false" showTickMarks="false" 
+                                                        maxWidth="200" HBox.hgrow="NEVER" />
+                                                <Label fx:id="lblMasterVolume" text="50%" minWidth="35" />
+                                             </children>
+                                          </HBox>
+                                          
+                                          <!-- Mix Balance Control -->
+                                          <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                             <children>
+                                                <Label text="Mix:" minWidth="50" />
+                                                <Label text="Music" style="-fx-font-size: 10px;" />
+                                                <Slider fx:id="mixBalanceSlider" min="0" max="100" value="50" 
+                                                        showTickLabels="false" showTickMarks="false" 
+                                                        maxWidth="150" HBox.hgrow="NEVER" />
+                                                <Label text="Hitsounds" style="-fx-font-size: 10px;" />
+                                             </children>
+                                          </HBox>
+                                          
+                                          <Separator />
+                                          
+                                          <!-- Legacy Sound Buttons -->
+                                          <Label text="Test Skin Sounds" styleClass="section-subtitle" />
                                           <HBox alignment="CENTER_LEFT" spacing="5.0">
                                              <children>
                                                 <Button fx:id="btnPlayHitsounds" text="Hitsounds" 

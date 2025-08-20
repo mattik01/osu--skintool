@@ -626,22 +626,91 @@ public class GameplayRenderer {
             borderColor = Color.rgb(rgb[0], rgb[1], rgb[2], 0.8);
         }
         
-        // Draw slider track with proper styling
-        // Outer border
+        // Calculate slider track width based on circle size
+        // Track should be at least as wide as the circles
+        double trackWidth = BASE_CIRCLE_SIZE * 1.0;
+        
+        // Draw white border first (underneath everything)
         gc.setStroke(borderColor);
-        gc.setLineWidth(BASE_CIRCLE_SIZE + 4);
+        gc.setLineWidth(trackWidth + 10);
         gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
+        gc.setLineJoin(javafx.scene.shape.StrokeLineJoin.ROUND);
         gc.strokeLine(startX, startY, endX, endY);
         
-        // Inner track with color
-        gc.setStroke(trackColor);
-        gc.setLineWidth(BASE_CIRCLE_SIZE - 4);
-        gc.strokeLine(startX, startY, endX, endY);
-        
-        // If we have sliderb texture, overlay it
-        if (sliderBody != null) {
-            // TODO: Implement texture tiling along path
-            // For now, just use the colored lines above
+        // Draw the main slider track body
+        if (sliderBody != null && trackColor != null) {
+            // Method 1: Draw solid color base with gradient overlay
+            gc.save();
+            
+            // Draw solid colored track base
+            gc.setStroke(trackColor);
+            gc.setLineWidth(trackWidth);
+            gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
+            gc.strokeLine(startX, startY, endX, endY);
+            
+            // Add subtle gradient overlay for depth
+            // Create gradient from lighter to darker version of track color
+            double dx = endX - startX;
+            double dy = endY - startY;
+            double angle = Math.atan2(dy, dx);
+            
+            // Draw multiple passes with decreasing width for gradient effect
+            for (int pass = 0; pass < 3; pass++) {
+                double widthFactor = 1.0 - (pass * 0.3);
+                double alphaFactor = 0.2 + (pass * 0.1);
+                
+                gc.setGlobalAlpha(alphaFactor * slider.getOpacity(currentTime));
+                gc.setStroke(trackColor.brighter());
+                gc.setLineWidth(trackWidth * widthFactor);
+                gc.strokeLine(startX, startY, endX, endY);
+            }
+            
+            // If texture exists, add subtle texture overlay
+            if (sliderBody != null) {
+                double length = Math.sqrt(dx * dx + dy * dy);
+                double textureSize = sliderBody.getWidth();
+                double segmentLength = textureSize * 0.5; // Use texture size for tiling
+                int numSegments = (int)(length / segmentLength) + 1;
+                
+                gc.setGlobalAlpha(0.15 * slider.getOpacity(currentTime)); // Very subtle texture
+                
+                for (int i = 0; i <= numSegments; i++) {
+                    double t = i / (double)numSegments;
+                    double x = startX + dx * t;
+                    double y = startY + dy * t;
+                    
+                    gc.save();
+                    gc.translate(x, y);
+                    gc.rotate(Math.toDegrees(angle));
+                    
+                    // Draw texture segment scaled to track width
+                    gc.drawImage(sliderBody, 
+                        -segmentLength/2, -trackWidth/2,
+                        segmentLength, trackWidth);
+                    
+                    gc.restore();
+                }
+            }
+            
+            gc.restore();
+        } else if (trackColor != null) {
+            // Fallback to simple colored track without texture
+            gc.setStroke(trackColor);
+            gc.setLineWidth(trackWidth);
+            gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
+            gc.strokeLine(startX, startY, endX, endY);
+            
+            // Add simple gradient effect
+            gc.setGlobalAlpha(0.3 * slider.getOpacity(currentTime));
+            gc.setStroke(trackColor.brighter());
+            gc.setLineWidth(trackWidth * 0.7);
+            gc.strokeLine(startX, startY, endX, endY);
+        } else {
+            // Ultimate fallback - gray track
+            gc.setStroke(Color.rgb(180, 180, 200, 0.8));
+            gc.setLineWidth(trackWidth);
+            gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
+            gc.strokeLine(startX, startY, endX, endY);
         }
         
         // Draw end circle for non-repeating sliders
@@ -806,7 +875,6 @@ public class GameplayRenderer {
         // Check CursorCentre property for trail positioning
         boolean cursorCentre = currentSkin != null ? currentSkin.getCursorCentre() : true;
         
-        int index = 0;
         for (CursorTrailPoint point : cursorTrailPoints) {
             double age = currentTime - point.time;
             double opacity = Math.max(0, 1.0 - (age * 5));  // Fade over 0.2 seconds
@@ -824,8 +892,6 @@ public class GameplayRenderer {
                 
                 gc.restore();
             }
-            
-            index++;
         }
     }
     

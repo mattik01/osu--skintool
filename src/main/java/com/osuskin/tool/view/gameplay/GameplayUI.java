@@ -17,7 +17,7 @@ public class GameplayUI {
     // UI Images
     private Image scorebarBg;
     private Image scorebarColour;
-    private Image[] scorebarColourFrames = new Image[3]; // scorebar-colour-0/1/2.png
+    private Image[] scorebarColourFrames = null; // Dynamic array for animated scorebar
     private Image scorebarMarker;
     private Image scorebarKi;
     private Image scorebarKiGlow;
@@ -32,8 +32,8 @@ public class GameplayUI {
     private Image scorePercent; // Percentage symbol for accuracy
     
     // Game state
-    private double health = 0.4;  // 0.0 to 1.0 - start at 40% health
-    private double previousHealth = 0.4; // For tracking HP changes
+    private double health = 0.25;  // 0.0 to 1.0 - start at 25% health
+    private double previousHealth = 0.25; // For tracking HP changes
     private double healthChangeTime = 0; // Time of last health change
     private boolean healthIncreased = false; // Track if health went up or down
     private int score = 0;
@@ -84,16 +84,26 @@ public class GameplayUI {
         scorebarBg = loader.loadImage("scorebar-bg");
         scorebarColour = loader.loadImage("scorebar-colour");
         
-        // Try loading multiple color frames for animated gradient
-        for (int i = 0; i < 3; i++) {
-            scorebarColourFrames[i] = loader.loadImage("scorebar-colour-" + i);
+        // Try loading animated scorebar frames for full osu! experience
+        java.util.List<Image> tempFrames = new java.util.ArrayList<>();
+        for (int i = 0; i < 200; i++) { // Check up to 200 frames
+            Image frame = loader.loadImage("scorebar-colour-" + i);
+            if (frame != null) {
+                tempFrames.add(frame);
+            } else if (i > 10) { // If we've loaded at least some frames and hit a gap, stop
+                break;
+            }
+        }
+        if (!tempFrames.isEmpty()) {
+            scorebarColourFrames = tempFrames.toArray(new Image[0]);
         }
         
-        scorebarMarker = loader.loadImage("scorebar-marker");
-        scorebarKi = loader.loadImage("scorebar-ki");
-        scorebarKiGlow = loader.loadImage("scorebar-ki-glow");
-        scorebarKiDanger = loader.loadImage("scorebar-kidanger");
-        scorebarKiDanger2 = loader.loadImage("scorebar-kidanger2");
+        // Load markers without fallback - these are optional health indicators
+        scorebarMarker = loader.loadImageNoFallback("scorebar-marker");
+        scorebarKi = loader.loadImageNoFallback("scorebar-ki");
+        scorebarKiGlow = loader.loadImageNoFallback("scorebar-ki-glow");
+        scorebarKiDanger = loader.loadImageNoFallback("scorebar-kidanger");
+        scorebarKiDanger2 = loader.loadImageNoFallback("scorebar-kidanger2");
         
         // Legacy fallback
         scorebar = loader.loadImage("scorebar");
@@ -135,7 +145,7 @@ public class GameplayUI {
         
         switch (result) {
             case HIT_300:
-                health = Math.min(1.0, health + 0.05);
+                health = Math.min(1.0, health + 0.08);  // Increased from 0.05
                 combo++;
                 score += 300 * Math.max(1, combo / 10);
                 perfect300++;
@@ -143,7 +153,7 @@ public class GameplayUI {
                 healthIncreased = true;
                 break;
             case HIT_100:
-                health = Math.min(1.0, health + 0.02);
+                health = Math.min(1.0, health + 0.04);  // Increased from 0.02
                 combo++;
                 score += 100 * Math.max(1, combo / 10);
                 good100++;
@@ -151,7 +161,7 @@ public class GameplayUI {
                 healthIncreased = true;
                 break;
             case HIT_50:
-                health = Math.min(1.0, health + 0.01);
+                health = Math.min(1.0, health + 0.02);  // Increased from 0.01
                 combo++;
                 score += 50 * Math.max(1, combo / 10);
                 meh50++;
@@ -159,7 +169,7 @@ public class GameplayUI {
                 healthIncreased = true;
                 break;
             case MISS:
-                health = Math.max(0.0, health - 0.10);
+                health = Math.max(0.0, health - 0.10);  // Keep same penalty
                 combo = 0;
                 totalHits++;
                 healthIncreased = false;
@@ -183,6 +193,8 @@ public class GameplayUI {
      * Render all UI elements.
      */
     public void render(double canvasWidth, double canvasHeight) {
+        // Correct order: scorebar-bg first, then scorebar-colour on top
+        
         // First render the full canvas background (scorebar-bg)
         renderFullBackground(canvasWidth, canvasHeight);
         // Then render health bar fill on top
@@ -201,7 +213,10 @@ public class GameplayUI {
     }
     
     private void renderFullBackground(double canvasWidth, double canvasHeight) {
-        // Draw scorebar-bg as full canvas background overlay
+        // IMPORTANT: In osu!, scorebar-bg is drawn AFTER scorebar-colour
+        // We're currently drawing it first which might cover the health bar
+        // This is kept for now but might need to be reversed
+        
         if (scorebarBg != null) {
             // scorebar-bg should be 1366x768 and fill the entire canvas
             // Draw at exact canvas size (should match the image dimensions)
@@ -217,8 +232,24 @@ public class GameplayUI {
     }
     
     private void renderHealthBarFill() {
-        double x = 0;  // Top-left corner
-        double y = 0;  // Top-left corner
+        // TEST: Always position scorebar-colour as if no markers exist
+        // This ignores marker presence and always uses (5, 16)
+        double x, y;
+        
+        // TEMPORARILY DISABLED: Marker-based positioning
+        // boolean hasAnyMarker = (scorebarMarker != null || scorebarKi != null || 
+        //                         scorebarKiDanger != null || scorebarKiDanger2 != null);
+        // if (hasAnyMarker) {
+        //     x = 12;
+        //     y = 12;
+        // } else {
+        //     x = 5;
+        //     y = 16;
+        // }
+        
+        // ALWAYS use no-marker positioning for testing
+        x = 5;
+        y = 16;
         
         // Calculate fill dimensions based on scorebar-colour actual dimensions
         double fillWidth = 0;
@@ -229,7 +260,7 @@ public class GameplayUI {
             actualBarWidth = scorebarColour.getWidth();
             actualBarHeight = scorebarColour.getHeight();
             fillWidth = actualBarWidth * health;
-        } else if (scorebarColourFrames[0] != null) {
+        } else if (scorebarColourFrames != null && scorebarColourFrames.length > 0) {
             actualBarWidth = scorebarColourFrames[0].getWidth();
             actualBarHeight = scorebarColourFrames[0].getHeight();
             fillWidth = actualBarWidth * health;
@@ -244,16 +275,20 @@ public class GameplayUI {
         if (fillWidth > 0) {
             gc.save();
             
-            // Clip to health amount with proper height  
+            // Clip to health amount - only clip width, not height
+            // Use a very large height to ensure no vertical clipping occurs
             gc.beginPath();
-            gc.rect(x, y, fillWidth, actualBarHeight);
+            gc.rect(x, 0, fillWidth, 10000);  // Effectively no height limit
             gc.clip();
             
             // Try animated color frames first
             boolean drewColorBar = false;
-            if (scorebarColourFrames[0] != null) {
-                // Use animated frames based on health level
-                int frameIndex = health > 0.5 ? 0 : (health > 0.25 ? 1 : 2);
+            if (scorebarColourFrames != null && scorebarColourFrames.length > 0) {
+                // For animated scorebar, pick frame based on health percentage
+                // Map health (0.0 to 1.0) to frame index
+                int frameIndex = (int)(health * (scorebarColourFrames.length - 1));
+                frameIndex = Math.max(0, Math.min(frameIndex, scorebarColourFrames.length - 1));
+                
                 Image colorFrame = scorebarColourFrames[frameIndex];
                 if (colorFrame != null) {
                     // Draw at original size, no scaling
@@ -294,67 +329,62 @@ public class GameplayUI {
             gc.restore();
         }
         
-        // Remove the flash box - only show glow on the bar fill itself
-        double flashTime = currentTime - healthChangeTime;
-        if (flashTime < 0.3 && fillWidth > 0) {
-            double flashOpacity = 1.0 - (flashTime / 0.3);
-            gc.save();
-            
-            // Only flash the filled portion of the bar
-            gc.beginPath();
-            gc.rect(x, y, fillWidth, actualBarHeight);
-            gc.clip();
-            
-            if (healthIncreased) {
-                gc.setFill(Color.rgb(100, 255, 100, flashOpacity * 0.2));
-            } else {
-                gc.setFill(Color.rgb(255, 100, 100, flashOpacity * 0.2));
-            }
-            gc.fillRect(x, y, fillWidth, actualBarHeight);
-            
-            gc.restore();
-        }
+        // Flash effect removed - no visual feedback on health changes
         
-        // Draw health marker at current position
-        if (scorebarMarker != null && health > 0) {
-            // Position based on actual scorebar-colour width
-            double markerX = x + fillWidth - scorebarMarker.getWidth() / 2;
-            double markerY = y + (actualBarHeight / 2) - scorebarMarker.getHeight() / 2;
+        // Draw health marker at current position (using same x, y from health bar)
+        renderHealthMarker(x, y, fillWidth, actualBarHeight);
+    }
+    
+    private void renderHealthMarker(double barX, double barY, double fillWidth, double barHeight) {
+        // Choose the appropriate marker based on health level
+        Image markerToUse = null;
+        double pulseScale = 1.0;
+        
+        if (health > 0 && fillWidth > 0) {
+            // Priority order: kidanger2 -> kidanger -> ki -> marker
+            if (health < 0.1 && scorebarKiDanger2 != null) {
+                markerToUse = scorebarKiDanger2;
+                pulseScale = 1.0 + Math.sin(currentTime * 10) * 0.1; // Fast pulse when critical
+            } else if (health < 0.3 && scorebarKiDanger != null) {
+                markerToUse = scorebarKiDanger;
+                pulseScale = 1.0 + Math.sin(currentTime * 6) * 0.05; // Medium pulse when low
+            } else if (scorebarKi != null) {
+                markerToUse = scorebarKi;
+            } else if (scorebarMarker != null) {
+                markerToUse = scorebarMarker;
+            }
             
-            // Add subtle bob animation to marker
-            double bobOffset = Math.sin(currentTime * 3) * 1.5;
-            gc.drawImage(scorebarMarker, markerX, markerY + bobOffset);
+            if (markerToUse != null) {
+                // Marker should be positioned at the end of the health fill
+                double markerWidth = markerToUse.getWidth() * pulseScale;
+                double markerHeight = markerToUse.getHeight() * pulseScale;
+                double markerX = barX + fillWidth - (markerWidth / 2);
+                // Vertically center the marker on the health bar
+                double markerY = barY + (barHeight / 2) - (markerHeight / 2);
+                
+                // Add subtle bob animation to marker
+                double bobOffset = Math.sin(currentTime * 3) * 1.5;
+                
+                gc.save();
+                if (pulseScale != 1.0) {
+                    // Apply scaling for pulse effect
+                    gc.translate(markerX + markerWidth/2, markerY + markerHeight/2);
+                    gc.scale(pulseScale, pulseScale);
+                    gc.drawImage(markerToUse, -markerWidth/2, -markerHeight/2 + bobOffset);
+                } else {
+                    gc.drawImage(markerToUse, markerX, markerY + bobOffset);
+                }
+                gc.restore();
+            }
         }
     }
     
     private void renderScoreBorder(double scoreX, double scoreY) {
-        // These elements are actually the border/decoration around score
-        // scorebar-ki elements are score area decorations, not health indicators
+        // scorebar-ki elements are actually health markers, not score decorations
+        // They are rendered as part of the health bar marker system
         
-        // Draw score border/frame elements
-        if (scorebarKi != null) {
-            // This is the score area border/decoration
-            gc.drawImage(scorebarKi, scoreX - 10, scoreY - 5);
-        }
-        
-        if (scorebarKiDanger != null && health < 0.3) {
-            // Show danger decoration near score when health is low
-            double pulseAlpha = 0.5 + Math.sin(currentTime * 4) * 0.3;
-            gc.save();
-            gc.setGlobalAlpha(pulseAlpha);
-            gc.drawImage(scorebarKiDanger, scoreX - 10, scoreY + 40);
-            gc.restore();
-        }
-        
-        if (scorebarKiDanger2 != null && health < 0.1) {
-            // Critical health indicator
-            double pulseAlpha = 0.7 + Math.sin(currentTime * 8) * 0.3;
-            gc.save();
-            gc.setGlobalAlpha(pulseAlpha);
-            gc.drawImage(scorebarKiDanger2, scoreX - 10, scoreY + 80);
-            gc.restore();
-            
-            // Red screen tint for critical health
+        // Add red screen tint for critical health as visual feedback
+        if (health < 0.1) {
             gc.save();
             gc.setGlobalAlpha(0.15 + Math.sin(currentTime * 10) * 0.05);
             gc.setFill(Color.rgb(255, 0, 0));
@@ -367,56 +397,158 @@ public class GameplayUI {
         // Position accuracy directly below score, right-aligned
         String accText = String.format("%.2f", accuracy);
         
+        // Scale factor for accuracy display (smaller than score)
+        double accScale = 0.48;  // 48% of original size (even smaller)
+        
         // Get actual dimensions from score numbers if available
         double digitWidth = 12;  // Default
         if (scoreNumbers[0] != null) {
-            digitWidth = scoreNumbers[0].getWidth() * 0.8;  // Slightly smaller for accuracy
+            digitWidth = scoreNumbers[0].getWidth() * accScale;
         }
         
-        double totalWidth = (accText.length() + 1) * digitWidth * 0.8;  // +1 for %
-        double x = canvasWidth - totalWidth - 10;  // Same right alignment as score
-        double y = 35;  // Directly below score
+        // Reduce digit spacing for tighter accuracy display
+        digitWidth *= 0.9;  // 10% tighter spacing between digits
         
-        // Draw accuracy using score numbers if available (reuse for consistency)
-        if (scoreNumbers[0] != null) {
-            for (int i = 0; i < accText.length(); i++) {
-                char c = accText.charAt(i);
-                if (c >= '0' && c <= '9') {
-                    int digit = Character.getNumericValue(c);
-                    // Draw at original size
-                    gc.drawImage(scoreNumbers[digit], x + i * digitWidth * 0.8, y);
-                } else if (c == '.') {
-                    // Draw decimal point
-                    gc.setFill(Color.WHITE);
-                    gc.fillOval(x + i * digitWidth + digitWidth/3, y + digitWidth, 3, 3);
+        // Check if score-percent.png is being used for positioning (centering trick)
+        boolean usePercentPositioning = false;
+        double percentWidth = 0;
+        if (scorePercent != null) {
+            percentWidth = scorePercent.getWidth();
+            double percentHeight = scorePercent.getHeight();
+            // If percent image is unusually wide (>100px or >3x height), it's likely used for positioning
+            usePercentPositioning = percentWidth > 100 || percentWidth > percentHeight * 3;
+        }
+        
+        // Position and render based on whether percent positioning is used
+        if (usePercentPositioning && scorePercent != null) {
+            // The skin uses score-percent.png width to position accuracy
+            // In osu!, the entire accuracy assembly is right-aligned to the percent image edge
+            double scaledPercentWidth = percentWidth * accScale;
+            double percentX = canvasWidth - scaledPercentWidth;
+            double y = 48;  // Even lower position
+            
+            // Calculate where digits should be drawn (working backwards from percent position)
+            double dotWidth = digitWidth * 0.25;  // Even smaller decimal point
+            double digitsWidth = 0;
+            for (char c : accText.toCharArray()) {
+                if (c == '.') {
+                    digitsWidth += dotWidth;
+                } else {
+                    digitsWidth += digitWidth;
                 }
             }
             
-            // Draw percent symbol at original size
-            if (scorePercent != null) {
-                gc.drawImage(scorePercent, x + accText.length() * digitWidth * 0.8, y);
-            } else {
-                gc.setFill(Color.WHITE);
-                gc.setFont(Font.font("Arial", 12));  // No scaling
-                gc.fillText("%", x + accText.length() * digitWidth * 0.8 + 2, y + digitWidth);
+            // Start position for digits (to the left of where percent actually appears in the image)
+            // We assume the visible percent is at the right edge of the image
+            double currentX = canvasWidth - scaledPercentWidth - digitsWidth;
+            
+            // Draw the digits
+            if (scoreNumbers[0] != null) {
+                gc.save();
+                for (int i = 0; i < accText.length(); i++) {
+                    char c = accText.charAt(i);
+                    if (c >= '0' && c <= '9') {
+                        int digit = Character.getNumericValue(c);
+                        gc.save();
+                        gc.scale(accScale, accScale);
+                        gc.drawImage(scoreNumbers[digit], currentX / accScale, y / accScale);
+                        gc.restore();
+                        currentX += digitWidth;
+                    } else if (c == '.') {
+                        gc.setFill(Color.WHITE);
+                        double dotX = currentX + dotWidth * 0.3;
+                        double dotY = y + digitWidth * 0.75;
+                        gc.fillOval(dotX, dotY, 2.5, 2.5);
+                        currentX += dotWidth;
+                    }
+                }
+                gc.restore();
             }
+            
+            // Draw the percent image at its full width (includes positioning padding)
+            gc.save();
+            gc.scale(accScale, accScale);
+            gc.drawImage(scorePercent, percentX / accScale, y / accScale);
+            gc.restore();
+            
         } else {
-            // Fallback text rendering
-            gc.setFill(Color.rgb(200, 200, 200));
-            gc.setFont(Font.font("Arial", 14));  // No scaling
-            gc.setTextAlign(TextAlignment.RIGHT);
-            gc.fillText(accText + "%", canvasWidth - 10, y + 12);
+            // Normal positioning - right-aligned to canvas edge
+            double dotWidth = digitWidth * 0.25;  // Smaller decimal point for tighter spacing
+            double totalWidth = 0;
+            
+            // Calculate total width
+            for (char c : accText.toCharArray()) {
+                if (c == '.') {
+                    totalWidth += dotWidth;
+                } else {
+                    totalWidth += digitWidth;
+                }
+            }
+            if (scorePercent != null) {
+                totalWidth += scorePercent.getWidth() * accScale;
+            } else {
+                totalWidth += digitWidth; // Space for % character
+            }
+            
+            double x = canvasWidth - totalWidth - 10;  // More padding for accuracy
+            double y = 48;  // Even lower position
+            
+            // Draw accuracy digits and percent normally
+            if (scoreNumbers[0] != null) {
+                gc.save();
+                double currentX = x;
+                
+                for (int i = 0; i < accText.length(); i++) {
+                    char c = accText.charAt(i);
+                    if (c >= '0' && c <= '9') {
+                        int digit = Character.getNumericValue(c);
+                        gc.save();
+                        gc.scale(accScale, accScale);
+                        gc.drawImage(scoreNumbers[digit], currentX / accScale, y / accScale);
+                        gc.restore();
+                        currentX += digitWidth;
+                    } else if (c == '.') {
+                        gc.setFill(Color.WHITE);
+                        double dotX = currentX + dotWidth * 0.3;
+                        double dotY = y + digitWidth * 0.75;
+                        gc.fillOval(dotX, dotY, 2.5, 2.5);
+                        currentX += dotWidth;
+                    }
+                }
+                
+                // Draw percent symbol
+                if (scorePercent != null) {
+                    gc.save();
+                    gc.scale(accScale, accScale);
+                    gc.drawImage(scorePercent, currentX / accScale, y / accScale);
+                    gc.restore();
+                } else {
+                    gc.setFill(Color.WHITE);
+                    gc.setFont(Font.font("Arial", 10));
+                    gc.fillText("%", currentX + 2, y + digitWidth * 0.8);
+                }
+                gc.restore();
+            } else {
+                // Fallback text rendering
+                gc.setFill(Color.rgb(200, 200, 200));
+                gc.setFont(Font.font("Arial", 11));
+                gc.setTextAlign(TextAlignment.RIGHT);
+                gc.fillText(accText + "%", canvasWidth - 10, y + 10);
+            }
         }
     }
     
     private void renderScore(double canvasWidth) {
         String scoreText = String.format("%08d", score);
-        // Position score in top-right corner at native resolution
+        // Position score in top-right corner with scaling
+        
+        // Scale factor for score display
+        double scoreScale = 0.8;  // 80% of original size (significantly bigger)
         
         // Get actual dimensions from first score number image if available
         double digitWidth = 15;  // Default
         if (scoreNumbers[0] != null) {
-            digitWidth = scoreNumbers[0].getWidth();
+            digitWidth = scoreNumbers[0].getWidth() * scoreScale;
         }
         
         // Get score overlap from skin
@@ -424,34 +556,42 @@ public class GameplayUI {
         if (elementLoader != null && elementLoader.getCurrentSkin() != null) {
             Integer scoreOverlap = elementLoader.getCurrentSkin().getScoreOverlap();
             if (scoreOverlap != null) {
-                overlap = scoreOverlap;  // No scaling
+                overlap = scoreOverlap * scoreScale;  // Scale the overlap too
             }
         }
+        // Add extra overlap to reduce gaps between digits
+        overlap += 3 * scoreScale;  // Tighter spacing
         
         // Calculate total width with overlap
         double spacing = digitWidth - overlap;
         double totalWidth = scoreText.length() * spacing;
-        double x = canvasWidth - totalWidth - 10;  // 10px from right edge
-        double y = 10;  // Very close to top
+        double x = canvasWidth - totalWidth - 6;  // Slightly more padding to the right
+        double y = 3;  // Very close to top edge
         
         // Draw score border/decoration first
         renderScoreBorder(x - 20, y);
         
         if (scoreNumbers[0] != null) {
-            // Draw score using score number images at original size
+            // Draw score using score number images with scaling
+            gc.save();
             for (int i = 0; i < scoreText.length(); i++) {
                 int digit = Character.getNumericValue(scoreText.charAt(i));
                 if (digit >= 0 && digit <= 9 && scoreNumbers[digit] != null) {
-                    // Draw at original size
-                    gc.drawImage(scoreNumbers[digit], x + i * spacing, y);
+                    // Draw with scaling
+                    double digitX = x + i * spacing;
+                    gc.save();
+                    gc.scale(scoreScale, scoreScale);
+                    gc.drawImage(scoreNumbers[digit], digitX / scoreScale, y / scoreScale);
+                    gc.restore();
                 }
             }
+            gc.restore();
         } else {
             // Fallback: draw text
             gc.setFill(Color.WHITE);
-            gc.setFont(Font.font("Arial", 16));  // No scaling
+            gc.setFont(Font.font("Arial", 13));  // Smaller font
             gc.setTextAlign(TextAlignment.RIGHT);
-            gc.fillText(scoreText, canvasWidth - 10, y + 15);
+            gc.fillText(scoreText, canvasWidth - 6, y + 12);
         }
     }
     
@@ -460,54 +600,64 @@ public class GameplayUI {
         
         // Position combo in bottom-left corner
         double x = 10 * scale;  // Small margin from left
-        double y = canvasHeight - (80 * scale);  // Near bottom
+        double y = canvasHeight - (60 * scale);  // Lower position (closer to bottom)
         
         String comboText = String.valueOf(combo);
         
         if (comboNumbers[0] != null) {
+            // Base scale for combo display (smaller overall)
+            double baseComboScale = 0.85;  // 85% of original size
+            
             // Draw combo using combo number images
-            double digitWidth = 40 * scale;  // Bigger digits for combo
-            double comboScale = 1.0;
+            double digitWidth = comboNumbers[0].getWidth() * scale * baseComboScale;
+            double comboScale = 1.0;  // Additional scale for milestones
             
             // Get combo overlap from skin
             double overlap = 0;
             if (elementLoader != null && elementLoader.getCurrentSkin() != null) {
                 Integer comboOverlap = elementLoader.getCurrentSkin().getComboOverlap();
                 if (comboOverlap != null) {
-                    overlap = comboOverlap * scale * comboScale;
+                    overlap = comboOverlap * scale * baseComboScale * comboScale;
                 }
             }
             
-            // Scale up for milestone combos
-            if (combo >= 100) comboScale = 1.3;
-            else if (combo >= 50) comboScale = 1.15;
+            // Scale up for milestone combos (but less dramatically)
+            if (combo >= 100) comboScale = 1.2;
+            else if (combo >= 50) comboScale = 1.1;
             
             double spacing = (digitWidth - overlap) * comboScale;
+            double finalScale = baseComboScale * comboScale;
             
             for (int i = 0; i < comboText.length(); i++) {
                 int digit = Character.getNumericValue(comboText.charAt(i));
                 if (digit >= 0 && digit <= 9 && comboNumbers[digit] != null) {
-                    // Draw at original size, no custom scaling
-                    gc.drawImage(comboNumbers[digit], x + i * spacing, y);
+                    // Draw with combined scaling
+                    gc.save();
+                    gc.scale(finalScale, finalScale);
+                    gc.drawImage(comboNumbers[digit], (x + i * spacing) / finalScale, y / finalScale);
+                    gc.restore();
                 }
             }
             
-            // Draw "x" after the number at original size
+            // Draw "x" after the number with same scaling
             if (comboX != null) {
-                double xPos = x + comboText.length() * digitWidth * comboScale;
-                gc.drawImage(comboX, xPos, y + 10);  // Original size, no scaling
+                double xPos = x + comboText.length() * spacing;
+                gc.save();
+                gc.scale(finalScale, finalScale);
+                gc.drawImage(comboX, xPos / finalScale, (y + 5) / finalScale);
+                gc.restore();
             } else {
                 gc.setFill(Color.WHITE);
-                gc.setFont(Font.font("Arial", 20 * comboScale));  // No base scaling
-                gc.fillText("x", x + comboText.length() * digitWidth * comboScale + 5, y + 30);
+                gc.setFont(Font.font("Arial", 18 * finalScale));
+                gc.fillText("x", x + comboText.length() * spacing + 5, y + digitWidth);
             }
         } else {
             // Fallback: draw text
             gc.setFill(Color.WHITE);
-            double fontSize = combo >= 50 ? 45 : 40;  // Bigger font, no scaling
+            double fontSize = combo >= 50 ? 38 : 35;  // Smaller fonts
             gc.setFont(Font.font("Arial Bold", fontSize));
             gc.setTextAlign(TextAlignment.LEFT);
-            gc.fillText(combo + "x", x, y + 50);
+            gc.fillText(combo + "x", x, y + 40);
         }
     }
     
@@ -531,7 +681,7 @@ public class GameplayUI {
     }
     
     public void reset() {
-        health = 0.4;  // Start at 40% health
+        health = 0.25;  // Start at 25% health
         score = 0;
         combo = 0;
         accuracy = 100.0;

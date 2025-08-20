@@ -31,11 +31,25 @@
       "Bash(cp:*)",
       "Bash(./run_all.sh)",
       "Bash(mv:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(dpkg:*)",
+      "Bash(pulseaudio:*)",
+      "Bash(for file in /root/skins/BubbleSkin23-10-24/scorebar-{marker,ki,kidanger,kidanger2}.png)",
+      "Bash(for skin in \"Vaxei 2023\" \"Incandescent Nebulae (ekoro edit)\" \"Zylice Skin Mix (2022 Compatibility Ver.)\")",
+      "Bash(do echo \"=== $skin ===\")",
+      "Bash(for file in \"/root/skins/$skin\"/scorebar-{marker,ki,kidanger,kidanger2}.png)",
+      "Bash(do [ -f \"$file\" ])",
+      "Bash(gst-launch-1.0:*)",
+      "Bash(ldconfig:*)",
+      "Bash(md5sum:*)",
+      "WebSearch",
+      "WebFetch(domain:osu.ppy.sh)"
     ],
     "deny": [],
     "additionalDirectories": [
-      "/root/skins/-    《DT》 - 『 東方Project 』 Paper Touhou Project  -"
+      "/root/skins/-    《DT》 - 『 東方Project 』 Paper Touhou Project  -",
+      "/root/skins/Vaxei 2023",
+      "/root/skins/Incandescent Nebulae (ekoro edit)"
     ]
   }
 }
