@@ -38,7 +38,6 @@ public class SkinElementLoader {
     
     public SkinElementLoader(Path skinDirectory) {
         this.skinDirectory = skinDirectory;
-        // TODO: Set default skin directory from application resources
     }
     
     public void setSkinDirectory(Path skinDirectory) {

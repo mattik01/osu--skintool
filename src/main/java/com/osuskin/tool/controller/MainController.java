@@ -1,6 +1,5 @@
 package com.osuskin.tool.controller;
 
-import com.osuskin.tool.controller.SkinPreviewController;
 import com.osuskin.tool.model.Configuration;
 import com.osuskin.tool.model.ElementGroup;
 import com.osuskin.tool.model.Skin;
@@ -28,18 +27,12 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.animation.AnimationTimer;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.stage.Modality;
-import javafx.scene.Scene;
-import javafx.scene.Parent;
-import javafx.fxml.FXMLLoader;
-import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,8 +132,6 @@ public class MainController implements Initializable {
     private MediaPlayer currentAudioPlayer;
     private List<MediaPlayer> hitsoundPlayers = new ArrayList<>();
     private AnimationTimer animationTimer;
-    private boolean isAnimating = false;
-    private Skin currentPreviewSkin;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -362,8 +353,7 @@ public class MainController implements Initializable {
     
     @FXML
     private void onSettings() {
-        // TODO: Implement settings dialog
-        logger.info("Settings dialog requested (not yet implemented)");
+        logger.info("Settings dialog not yet implemented");
     }
     
     @FXML
@@ -393,8 +383,7 @@ public class MainController implements Initializable {
     
     @FXML
     private void onClearCache() {
-        // TODO: Implement cache clearing
-        logger.info("Clear cache requested (not yet implemented)");
+        logger.info("Cache clearing not yet implemented");
     }
     
     @FXML
@@ -656,7 +645,6 @@ public class MainController implements Initializable {
     }
     
     private void displaySkinPreview(Skin skin) {
-        currentPreviewSkin = skin;
         
         // Update skin name
         lblSkinName.setText(skin.getName());
@@ -804,7 +792,6 @@ public class MainController implements Initializable {
         if (useEnhancedRenderer && enhancedRenderer == null) return;
         if (!useEnhancedRenderer && simpleRenderer == null) return;
         
-        isAnimating = true;
         
         if (animationTimer != null) {
             animationTimer.stop();
@@ -841,7 +828,6 @@ public class MainController implements Initializable {
             animationTimer.stop();
             animationTimer = null;
         }
-        isAnimating = false;
     }
     
     private void showError(String title, String message) {
