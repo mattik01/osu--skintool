@@ -22,7 +22,7 @@ public class SimpleGameplayRenderer {
     private static final Logger logger = LoggerFactory.getLogger(SimpleGameplayRenderer.class);
     
     private final Canvas canvas;
-    private final SkinElementLoader elementLoader;
+    private SkinElementLoader elementLoader;
     private final GraphicsContext gc;
     
     // Loaded skin elements
@@ -46,6 +46,15 @@ public class SimpleGameplayRenderer {
         this.canvas = canvas;
         this.elementLoader = elementLoader;
         this.gc = canvas.getGraphicsContext2D();
+    }
+    
+    /**
+     * Update the element loader (for skin switching).
+     */
+    public void setElementLoader(SkinElementLoader elementLoader) {
+        this.elementLoader = elementLoader;
+        // Re-initialize with new skin
+        initialize();
     }
     
     public void initialize() {

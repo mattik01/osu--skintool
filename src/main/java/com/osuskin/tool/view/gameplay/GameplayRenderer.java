@@ -20,7 +20,7 @@ public class GameplayRenderer {
     private static final Logger logger = LoggerFactory.getLogger(GameplayRenderer.class);
     
     private final Canvas canvas;
-    private final SkinElementLoader elementLoader;
+    private SkinElementLoader elementLoader;
     private final GraphicsContext gc;
     private com.osuskin.tool.model.Skin currentSkin;
     
@@ -82,6 +82,23 @@ public class GameplayRenderer {
         this.elementLoader = elementLoader;
         this.gc = canvas.getGraphicsContext2D();
         this.gameplayUI = new GameplayUI(gc);
+    }
+    
+    /**
+     * Update the element loader (for skin switching).
+     */
+    public void setElementLoader(SkinElementLoader elementLoader) {
+        this.elementLoader = elementLoader;
+        // Re-initialize with new skin
+        initialize();
+    }
+    
+    /**
+     * Reload elements after priority loading completes.
+     */
+    public void updateElements() {
+        loadElements();
+        gameplayUI.loadElements(elementLoader);
     }
     
     public void initialize() {

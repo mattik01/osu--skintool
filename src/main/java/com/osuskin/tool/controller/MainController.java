@@ -8,6 +8,8 @@ import com.osuskin.tool.service.LazyLoadingSkinService;
 import com.osuskin.tool.service.SkinContainerService;
 import com.osuskin.tool.service.SkinElementLoader;
 import com.osuskin.tool.service.AudioMixerService;
+import com.osuskin.tool.service.AsyncSkinLoader;
+import com.osuskin.tool.service.PriorityLoader;
 import com.osuskin.tool.view.SimpleGameplayRenderer;
 import com.osuskin.tool.view.gameplay.GameplayRenderer;
 import com.osuskin.tool.util.ConfigurationManager;
@@ -140,6 +142,9 @@ public class MainController implements Initializable {
     private List<MediaPlayer> hitsoundPlayers = new ArrayList<>();
     private AnimationTimer animationTimer;
     private AudioMixerService audioMixerService;
+    private AsyncSkinLoader asyncSkinLoader;
+    private PriorityLoader priorityLoader;
+    private Task<AsyncSkinLoader.SkinLoadResult> currentPreviewTask;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -192,6 +197,13 @@ public class MainController implements Initializable {
         // Initialize audio mixer service
         audioMixerService = new AudioMixerService();
         setupAudioMixerControls();
+        
+        // Initialize async loaders
+        asyncSkinLoader = new AsyncSkinLoader();
+        priorityLoader = new PriorityLoader();
+        
+        // Pre-initialize renderers at startup for performance
+        preInitializeRenderers();
         
         logger.info("MainController initialization completed");
     }
@@ -733,9 +745,26 @@ public class MainController implements Initializable {
         }
     }
     
+    /**
+     * Pre-initialize renderers at application startup for better performance.
+     * This creates the renderers once and reuses them for all skin switches.
+     */
+    private void preInitializeRenderers() {
+        logger.info("Pre-initializing renderers...");
+        
+        // Create a dummy element loader for initialization
+        elementLoader = new SkinElementLoader(null);
+        
+        // Create both renderers but don't initialize yet (no skin loaded)
+        enhancedRenderer = new GameplayRenderer(gameplayCanvas, elementLoader);
+        simpleRenderer = new SimpleGameplayRenderer(gameplayCanvas, elementLoader);
+        
+        logger.info("Renderers pre-initialized");
+    }
+    
     private void displaySkinPreview(Skin skin) {
         
-        // Update skin name
+        // Update skin name immediately
         lblSkinName.setText(skin.getName());
         
         // Show preview controls
@@ -744,40 +773,162 @@ public class MainController implements Initializable {
         // Stop any current animations/audio
         stopCurrentPreview();
         
-        // Initialize element loader for this skin
-        Path skinPath = skin.getDirectoryPathAsPath();
-        elementLoader = new SkinElementLoader(skinPath);
-        elementLoader.setCurrentSkin(skin);  // Pass skin for combo colors
+        // Clear canvas immediately for clean transition
+        gameplayCanvas.getGraphicsContext2D().clearRect(0, 0, 
+            gameplayCanvas.getWidth(), gameplayCanvas.getHeight());
         
-        // Set element loader for audio mixer service
-        audioMixerService.setElementLoader(elementLoader);
-        
-        // Initialize appropriate renderer based on setting
-        if (useEnhancedRenderer) {
-            enhancedRenderer = new GameplayRenderer(gameplayCanvas, elementLoader);
-        } else {
-            simpleRenderer = new SimpleGameplayRenderer(gameplayCanvas, elementLoader);
+        // Cancel previous preview task if running
+        if (currentPreviewTask != null && currentPreviewTask.isRunning()) {
+            currentPreviewTask.cancel();
         }
         
-        // Update element info immediately
-        updateElementInfo();
+        // Show loading indicator
+        if (previewLoadingPane != null) {
+            previewLoadingPane.setVisible(true);
+            // Unbind first before setting values
+            if (previewProgressBar != null) {
+                previewProgressBar.progressProperty().unbind();
+                previewProgressBar.setProgress(0);
+            }
+            if (previewLoadingLabel != null) {
+                previewLoadingLabel.textProperty().unbind();
+                previewLoadingLabel.setText("Loading skin...");
+            }
+        }
         
-        // Initialize and start autoplay animation without preloading
-        Platform.runLater(() -> {
-            // Ensure canvas is properly scaled FIRST
-            scaleCanvasToFitContainer();
-            
-            // Then initialize renderers with correct canvas dimensions
-            if (useEnhancedRenderer) {
-                enhancedRenderer.initialize();
-                enhancedRenderer.onCanvasResize(); // Notify about canvas size
-            } else {
-                simpleRenderer.initialize();
+        // Create async loading task
+        currentPreviewTask = asyncSkinLoader.createLoadTask(skin);
+        
+        // Bind progress (after setting initial values)
+        if (previewProgressBar != null) {
+            previewProgressBar.progressProperty().bind(currentPreviewTask.progressProperty());
+        }
+        if (previewLoadingLabel != null) {
+            previewLoadingLabel.textProperty().bind(currentPreviewTask.messageProperty());
+        }
+        
+        // Handle completion
+        Task<AsyncSkinLoader.SkinLoadResult> thisTask = currentPreviewTask; // Capture reference
+        currentPreviewTask.setOnSucceeded(e -> {
+            // Only process if this is still the current task
+            if (thisTask != currentPreviewTask) {
+                logger.debug("Ignoring completed task - a newer task has started");
+                return;
             }
             
-            // Finally start the animation
-            startAutoplayAnimation();
+            AsyncSkinLoader.SkinLoadResult result = thisTask.getValue();
+            
+            if (result != null && result.success) {
+                // Update element loader
+                elementLoader = result.loader;
+                
+                // Set element loader for audio mixer service
+                audioMixerService.setElementLoader(elementLoader);
+                
+                // Update renderers to use new element loader (reuse existing instances)
+                if (useEnhancedRenderer) {
+                    enhancedRenderer.setElementLoader(elementLoader);
+                } else {
+                    simpleRenderer.setElementLoader(elementLoader);
+                }
+                
+                // Update element info
+                updateElementInfo();
+                
+                // Hide loading indicator and unbind
+                if (previewLoadingPane != null) {
+                    previewLoadingPane.setVisible(false);
+                    if (previewProgressBar != null) {
+                        previewProgressBar.progressProperty().unbind();
+                    }
+                    if (previewLoadingLabel != null) {
+                        previewLoadingLabel.textProperty().unbind();
+                    }
+                }
+                
+                // Use priority loader for progressive rendering
+                priorityLoader.loadSkinWithPriority(skin, elementLoader,
+                    () -> {
+                        // Critical elements loaded - show preview immediately
+                        scaleCanvasToFitContainer();
+                        if (useEnhancedRenderer) {
+                            enhancedRenderer.initialize();
+                            enhancedRenderer.onCanvasResize();
+                        } else {
+                            simpleRenderer.initialize();
+                        }
+                        startAutoplayAnimation();
+                    },
+                    () -> {
+                        // High priority loaded - update preview
+                        if (useEnhancedRenderer) {
+                            enhancedRenderer.updateElements();
+                        }
+                    },
+                    () -> {
+                        // Medium priority loaded - update preview
+                        if (useEnhancedRenderer) {
+                            enhancedRenderer.updateElements();
+                        }
+                    },
+                    () -> {
+                        // All elements loaded
+                        logger.info("All elements loaded for skin: {}", skin.getName());
+                    }
+                );
+            } else {
+                // Handle error or cancellation (but only if still current task)
+                if (result != null && "Loading cancelled".equals(result.errorMessage)) {
+                    // Task was cancelled - this is normal when switching skins quickly
+                    logger.debug("Skin loading cancelled for: {}", skin.getName());
+                    // Just hide the loading pane, don't show error
+                    if (previewLoadingPane != null && thisTask == currentPreviewTask) {
+                        previewLoadingPane.setVisible(false);
+                        if (previewProgressBar != null) {
+                            previewProgressBar.progressProperty().unbind();
+                        }
+                        if (previewLoadingLabel != null) {
+                            previewLoadingLabel.textProperty().unbind();
+                        }
+                    }
+                } else if (thisTask == currentPreviewTask) {
+                    // Real error
+                    String errorMsg = result != null && result.errorMessage != null ? 
+                        result.errorMessage : "Unknown error loading skin";
+                    logger.error("Failed to load skin: {}", errorMsg);
+                    if (previewLoadingLabel != null) {
+                        previewLoadingLabel.textProperty().unbind();
+                        previewLoadingLabel.setText("Error: " + errorMsg);
+                    }
+                    if (previewProgressBar != null) {
+                        previewProgressBar.progressProperty().unbind();
+                    }
+                }
+            }
         });
+        
+        thisTask.setOnFailed(e -> {
+            // Only process if this is still the current task
+            if (thisTask != currentPreviewTask) {
+                logger.debug("Ignoring failed task - a newer task has started");
+                return;
+            }
+            logger.error("Skin loading task failed", thisTask.getException());
+            if (previewLoadingPane != null) {
+                if (previewLoadingLabel != null) {
+                    previewLoadingLabel.textProperty().unbind();
+                    previewLoadingLabel.setText("Failed to load skin");
+                }
+                if (previewProgressBar != null) {
+                    previewProgressBar.progressProperty().unbind();
+                }
+            }
+        });
+        
+        // Start the async loading
+        Thread loadThread = new Thread(currentPreviewTask);
+        loadThread.setDaemon(true);
+        loadThread.start();
     }
     
     private void updateElementInfo() {

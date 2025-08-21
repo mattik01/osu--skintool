@@ -13,6 +13,7 @@ module osu.skintool {
     opens com.osuskin.tool to javafx.fxml;
     opens com.osuskin.tool.controller to javafx.fxml;
     opens com.osuskin.tool.model to com.fasterxml.jackson.databind;
+    opens com.osuskin.tool.service to com.fasterxml.jackson.databind;
     
     exports com.osuskin.tool;
 }

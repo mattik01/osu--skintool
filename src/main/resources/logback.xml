@@ -23,7 +23,21 @@
     </appender>
     
     <!-- Logger for application packages -->
-    <logger name="com.osuskin.tool" level="DEBUG"/>
+    <logger name="com.osuskin.tool" level="INFO"/>
+    
+    <!-- Granular control for specific classes/packages -->
+    <!-- Set these to DEBUG to see detailed loading information -->
+    <logger name="com.osuskin.tool.service.SkinElementLoader" level="WARN"/>
+    <logger name="com.osuskin.tool.service.SkinScannerService" level="INFO"/>
+    <logger name="com.osuskin.tool.service.HitsoundGeneratorService" level="INFO"/>
+    <logger name="com.osuskin.tool.view.SimpleGameplayRenderer" level="INFO"/>
+    <logger name="com.osuskin.tool.view.gameplay" level="INFO"/>
+    <logger name="com.osuskin.tool.service.AudioMixerService" level="INFO"/>
+    
+    <!-- Performance-related logging (set to DEBUG when optimizing) -->
+    <logger name="com.osuskin.tool.service.AsyncSkinLoader" level="INFO"/>
+    <logger name="com.osuskin.tool.service.PriorityLoader" level="INFO"/>
+    <logger name="com.osuskin.tool.service.SkinIndexCache" level="INFO"/>
     
     <!-- Root logger -->
     <root level="INFO">

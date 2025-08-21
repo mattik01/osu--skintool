@@ -35,6 +35,7 @@ public class SkinElementLoader {
     private Path defaultSkinDirectory;
     private static final String DEFAULT_SKIN_RESOURCE_PATH = "/default-skin/";
     private com.osuskin.tool.model.Skin currentSkin;
+    private SkinIndexCache.SkinIndex currentIndex;
     
     public SkinElementLoader(Path skinDirectory) {
         this.skinDirectory = skinDirectory;
@@ -44,6 +45,15 @@ public class SkinElementLoader {
         this.skinDirectory = skinDirectory;
         this.currentSkin = null;  // Reset current skin
         clearCache();
+        
+        // Load or create index for the new skin directory
+        if (skinDirectory != null && Files.exists(skinDirectory)) {
+            SkinIndexCache indexCache = new SkinIndexCache();
+            SkinIndexCache.SkinIndexResult result = indexCache.loadOrCreateIndex(skinDirectory);
+            this.currentIndex = result.index;
+        } else {
+            this.currentIndex = null;
+        }
     }
     
     public void setCurrentSkin(com.osuskin.tool.model.Skin skin) {
@@ -65,6 +75,95 @@ public class SkinElementLoader {
     }
     
     /**
+     * Invalidate the current index and trigger a rebuild.
+     * Called when a mismatch is detected.
+     */
+    private void invalidateAndRebuildIndex() {
+        if (skinDirectory == null) return;
+        
+        try {
+            // Invalidate the cached index
+            SkinIndexCache indexCache = new SkinIndexCache();
+            indexCache.invalidateIndex(skinDirectory);
+            
+            // Rebuild the index
+            SkinIndexCache.SkinIndexResult result = indexCache.loadOrCreateIndex(skinDirectory);
+            this.currentIndex = result.index;
+            
+            logger.info("Index rebuilt due to mismatch. New index has {} elements", 
+                currentIndex.availableElements.size());
+        } catch (Exception e) {
+            logger.error("Failed to rebuild index after mismatch", e);
+        }
+    }
+    
+    /**
+     * Check if an element exists in the current skin using the index.
+     * Falls back to filesystem check if index is not available.
+     * Detects mismatches and triggers index rebuild if needed.
+     */
+    public boolean elementExists(String elementName) {
+        if (currentIndex != null && !currentIndex.availableElements.isEmpty()) {
+            // Use index for O(1) lookup
+            boolean indexSays = currentIndex.availableElements.contains(elementName) ||
+                               currentIndex.availableElements.contains(elementName + "@2x");
+            
+            // Periodically verify index accuracy (only for elements that index says exist)
+            // This catches deleted files
+            if (indexSays && Math.random() < 0.1) { // Check 10% of lookups
+                boolean actuallyExists = checkFileSystem(elementName);
+                if (!actuallyExists) {
+                    logger.warn("Index mismatch detected! {} was in index but not on disk. Triggering rebuild.", elementName);
+                    invalidateAndRebuildIndex();
+                    return false;
+                }
+            }
+            
+            return indexSays;
+        }
+        
+        // Fallback to filesystem check
+        return checkFileSystem(elementName);
+    }
+    
+    /**
+     * Get the frame count for an animation element from the index.
+     */
+    public int getAnimationFrameCount(String baseName) {
+        if (currentIndex != null) {
+            return currentIndex.animationFrameCounts.getOrDefault(baseName, 0);
+        }
+        return 0;
+    }
+    
+    /**
+     * Fallback method to check if element exists in filesystem.
+     */
+    private boolean checkFileSystem(String elementName) {
+        if (skinDirectory == null) return false;
+        
+        // Check for standard version
+        for (String ext : IMAGE_EXTENSIONS) {
+            if (Files.exists(skinDirectory.resolve(elementName + "." + ext))) {
+                return true;
+            }
+            // Check HD version
+            if (Files.exists(skinDirectory.resolve(elementName + "@2x." + ext))) {
+                return true;
+            }
+        }
+        
+        // Check for audio files
+        for (String ext : AUDIO_EXTENSIONS) {
+            if (Files.exists(skinDirectory.resolve(elementName + "." + ext))) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
      * Load an image element, trying different extensions.
      * Prefers standard versions over @2x HD versions.
      * Falls back to default skin if not found.
@@ -76,12 +175,23 @@ public class SkinElementLoader {
         
         Image image = null;
         
+        // Check if index says element doesn't exist
+        boolean indexSaysNoExist = currentIndex != null && 
+            !currentIndex.availableElements.contains(elementName) &&
+            !currentIndex.availableElements.contains(elementName + "@2x");
+        
         // Try standard version first (preferred)
         image = tryLoadImage(elementName);
         
         // Try HD version if standard not found (@2x)
         if (image == null) {
             image = tryLoadImage(elementName + "@2x");
+        }
+        
+        // If we found an image that index said didn't exist, rebuild index
+        if (image != null && indexSaysNoExist) {
+            logger.warn("Index mismatch detected! {} was loaded but wasn't in index. Triggering rebuild.", elementName);
+            invalidateAndRebuildIndex();
         }
         
         // Try default skin from file system if configured
@@ -271,45 +381,6 @@ public class SkinElementLoader {
         return audioList;
     }
     
-    /**
-     * Check if an element exists in the skin (any supported format).
-     */
-    public boolean elementExists(String elementName) {
-        // Check for images
-        for (String ext : IMAGE_EXTENSIONS) {
-            Path imagePath = skinDirectory.resolve(elementName + "." + ext);
-            if (Files.exists(imagePath)) {
-                return true;
-            }
-            // Check HD version
-            imagePath = skinDirectory.resolve(elementName + "@2x." + ext);
-            if (Files.exists(imagePath)) {
-                return true;
-            }
-        }
-        
-        // Check for audio
-        for (String ext : AUDIO_EXTENSIONS) {
-            Path audioPath = skinDirectory.resolve(elementName + "." + ext);
-            if (Files.exists(audioPath)) {
-                return true;
-            }
-        }
-        
-        // Check for animated frames
-        for (String ext : IMAGE_EXTENSIONS) {
-            Path framePath = skinDirectory.resolve(elementName + "-0." + ext);
-            if (Files.exists(framePath)) {
-                return true;
-            }
-            Path framePath1 = skinDirectory.resolve(elementName + "-1." + ext);
-            if (Files.exists(framePath1)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
     
     /**
      * Get a list of all elements present in the skin, categorized.

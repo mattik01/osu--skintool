@@ -44,7 +44,9 @@
       "Bash(md5sum:*)",
       "WebSearch",
       "WebFetch(domain:osu.ppy.sh)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(./test-index-performance.sh:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "additionalDirectories": [

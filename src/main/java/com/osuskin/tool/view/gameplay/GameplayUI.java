@@ -84,19 +84,8 @@ public class GameplayUI {
         scorebarBg = loader.loadImage("scorebar-bg");
         scorebarColour = loader.loadImage("scorebar-colour");
         
-        // Try loading animated scorebar frames for full osu! experience
-        java.util.List<Image> tempFrames = new java.util.ArrayList<>();
-        for (int i = 0; i < 200; i++) { // Check up to 200 frames
-            Image frame = loader.loadImage("scorebar-colour-" + i);
-            if (frame != null) {
-                tempFrames.add(frame);
-            } else if (i > 10) { // If we've loaded at least some frames and hit a gap, stop
-                break;
-            }
-        }
-        if (!tempFrames.isEmpty()) {
-            scorebarColourFrames = tempFrames.toArray(new Image[0]);
-        }
+        // Smart loading of scorebar animation frames
+        loadOptimizedScorebarFrames(loader);
         
         // Load markers without fallback - these are optional health indicators
         scorebarMarker = loader.loadImageNoFallback("scorebar-marker");
@@ -678,6 +667,87 @@ public class GameplayUI {
     
     public void setAccuracy(double accuracy) {
         this.accuracy = accuracy;
+    }
+    
+    /**
+     * Smart loading of scorebar animation frames.
+     * Uses exponential search to find frame range, then samples evenly.
+     */
+    private void loadOptimizedScorebarFrames(com.osuskin.tool.service.SkinElementLoader loader) {
+        final int MAX_SCOREBAR_FRAMES = 10;  // Maximum frames to load
+        
+        // Step 1: Find actual frame range using exponential search
+        int maxFrame = findMaxScorebarFrame(loader);
+        
+        if (maxFrame < 0) {
+            // No numbered frames found - clear any existing frames and use static scorebarColour as fallback
+            scorebarColourFrames = null;
+            return;
+        }
+        
+        // Step 2: Calculate which frames to sample
+        java.util.List<Image> frames = new java.util.ArrayList<>();
+        int minFrame = 0;
+        int totalFrames = maxFrame - minFrame + 1;
+        
+        if (totalFrames <= MAX_SCOREBAR_FRAMES) {
+            // Load all frames if 10 or fewer
+            for (int i = minFrame; i <= maxFrame; i++) {
+                Image frame = loader.loadImage("scorebar-colour-" + i);
+                if (frame != null) frames.add(frame);
+            }
+        } else {
+            // Sample evenly across the range
+            double interval = (double)(maxFrame - minFrame) / (MAX_SCOREBAR_FRAMES - 1);
+            for (int i = 0; i < MAX_SCOREBAR_FRAMES; i++) {
+                int frameNum = minFrame + (int)(i * interval);
+                Image frame = loader.loadImage("scorebar-colour-" + frameNum);
+                if (frame != null) frames.add(frame);
+            }
+        }
+        
+        if (!frames.isEmpty()) {
+            scorebarColourFrames = frames.toArray(new Image[0]);
+            System.out.println("Loaded " + frames.size() + " scorebar frames (from " + totalFrames + " available)");
+        } else {
+            // Clear frames if nothing was loaded successfully
+            scorebarColourFrames = null;
+        }
+    }
+    
+    /**
+     * Find the maximum scorebar frame number using exponential/binary search.
+     */
+    private int findMaxScorebarFrame(com.osuskin.tool.service.SkinElementLoader loader) {
+        // Exponential search to find upper bound
+        int frame = 0;
+        int step = 10;
+        
+        // First check if frame 0 exists
+        if (!loader.elementExists("scorebar-colour-0")) {
+            return -1;  // No animation frames
+        }
+        
+        // Find upper bound
+        while (frame < 500 && loader.elementExists("scorebar-colour-" + frame)) {
+            frame += step;
+            step = Math.min(step * 2, 50); // Cap step size
+        }
+        
+        // Binary search for exact last frame
+        int left = Math.max(0, frame - step);
+        int right = frame;
+        
+        while (left < right) {
+            int mid = (left + right + 1) / 2;
+            if (loader.elementExists("scorebar-colour-" + mid)) {
+                left = mid;
+            } else {
+                right = mid - 1;
+            }
+        }
+        
+        return left;
     }
     
     public void reset() {
