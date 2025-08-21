@@ -17,13 +17,14 @@ public class AudioMixerService {
     private MediaPlayer originalAudioPlayer;
     private MediaPlayer hitsoundsPlayer;
     private SkinElementLoader elementLoader;
+    private DynamicHitsoundService dynamicHitsoundService;
     
     private boolean isPlaying = false;
     private boolean isLooping = true;
     
     private double masterVolume = 0.5;
-    private double originalMixLevel = 0.5;
-    private double hitsoundMixLevel = 0.5;
+    private double originalMixLevel = 0.2;  // 20% for music
+    private double hitsoundMixLevel = 0.8;  // 80% for hitsounds
     
     private String currentSampleName = null;
     private Path samplesDirectory;
@@ -54,6 +55,7 @@ public class AudioMixerService {
         // Use absolute path to samples directory
         String currentDir = System.getProperty("user.dir");
         this.samplesDirectory = Paths.get(currentDir, "beatmap-hitsound-extractor", "samples");
+        this.dynamicHitsoundService = new DynamicHitsoundService();
         logger.info("AudioMixerService initialized with samples directory: {}", samplesDirectory);
     }
     
@@ -111,16 +113,43 @@ public class AudioMixerService {
         try {
             logger.info("Loading audio file: {}", sample.audioFile);
             logger.info("Audio file exists: {}", sample.audioFile.toFile().exists());
-            logger.info("Loading hitsounds file: {}", sample.hitsoundsFile);
-            logger.info("Hitsounds file exists: {}", sample.hitsoundsFile.toFile().exists());
             
-            if (!sample.audioFile.toFile().exists() || !sample.hitsoundsFile.toFile().exists()) {
-                logger.error("Sample files do not exist for: {}", sampleName);
+            if (!sample.audioFile.toFile().exists()) {
+                logger.error("Audio file does not exist for: {}", sampleName);
                 return;
             }
             
             String audioUri = sample.audioFile.toUri().toString();
-            String hitsoundsUri = sample.hitsoundsFile.toUri().toString();
+            String hitsoundsUri;
+            
+            // If we have a skin loaded, try to generate dynamic hitsounds
+            if (elementLoader != null && elementLoader.getCurrentSkin() != null) {
+                String skinPath = elementLoader.getCurrentSkin().getDirectoryPath();
+                logger.info("Generating dynamic hitsounds for sample {} with skin: {}", sampleName, skinPath);
+                
+                try {
+                    // This is blocking for simplicity, but could be made async
+                    Path dynamicHitsounds = dynamicHitsoundService
+                        .regenerateHitsounds(skinPath, sampleName)
+                        .get(); // Block and wait for generation
+                    
+                    if (dynamicHitsounds != null && dynamicHitsounds.toFile().exists()) {
+                        hitsoundsUri = dynamicHitsounds.toUri().toString();
+                        logger.info("Using dynamically generated hitsounds: {}", dynamicHitsounds);
+                    } else {
+                        // Fall back to pre-rendered hitsounds
+                        hitsoundsUri = sample.hitsoundsFile.toUri().toString();
+                        logger.info("Falling back to pre-rendered hitsounds");
+                    }
+                } catch (Exception e) {
+                    logger.error("Error generating dynamic hitsounds, falling back to pre-rendered", e);
+                    hitsoundsUri = sample.hitsoundsFile.toUri().toString();
+                }
+            } else {
+                // No skin loaded, use pre-rendered hitsounds
+                hitsoundsUri = sample.hitsoundsFile.toUri().toString();
+                logger.info("No skin loaded, using pre-rendered hitsounds");
+            }
             logger.info("Audio URI: {}", audioUri);
             logger.info("Hitsounds URI: {}", hitsoundsUri);
             

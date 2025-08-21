@@ -81,6 +81,7 @@ public class MainController implements Initializable {
     @FXML private StackPane canvasStackPane;  // The StackPane that contains the canvas
     
     // Audio Controls
+    @FXML private VBox audioPreviewBox;
     @FXML private ComboBox<String> sampleSelector;
     @FXML private ToggleButton btnPlayPause;
     @FXML private CheckBox loopCheckbox;
@@ -612,11 +613,28 @@ public class MainController implements Initializable {
         }
         
         // Setup mix balance slider (0 = full music, 100 = full hitsounds)
+        // Middle position (50) should give 80% hitsounds, 20% music
         if (mixBalanceSlider != null) {
+            mixBalanceSlider.setValue(50.0); // Set default to middle
             mixBalanceSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-                double balance = newValue.doubleValue() / 100.0;
-                audioMixerService.setOriginalMixLevel(1.0 - balance);
-                audioMixerService.setHitsoundMixLevel(balance);
+                double sliderValue = newValue.doubleValue() / 100.0; // 0.0 to 1.0
+                
+                // Non-linear mapping: at slider=0.5, we want hitsounds=0.8, music=0.2
+                // Use exponential curve for more intuitive control
+                double hitsoundLevel, musicLevel;
+                
+                if (sliderValue <= 0.5) {
+                    // 0 to 50: music goes from 1.0 to 0.2, hitsounds from 0.0 to 0.8
+                    musicLevel = 1.0 - (sliderValue * 1.6);  // 1.0 -> 0.2
+                    hitsoundLevel = sliderValue * 1.6;        // 0.0 -> 0.8
+                } else {
+                    // 50 to 100: music goes from 0.2 to 0.0, hitsounds from 0.8 to 1.0
+                    musicLevel = 0.2 * (2.0 - sliderValue * 2.0);   // 0.2 -> 0.0
+                    hitsoundLevel = 0.8 + (sliderValue - 0.5) * 0.4; // 0.8 -> 1.0
+                }
+                
+                audioMixerService.setOriginalMixLevel(musicLevel);
+                audioMixerService.setHitsoundMixLevel(hitsoundLevel);
             });
         }
         
@@ -682,7 +700,12 @@ public class MainController implements Initializable {
         if (canvasGroup != null) {
             canvasGroup.setVisible(false);
         }
-        // Hide audio controls
+        // Hide audio preview box
+        if (audioPreviewBox != null) {
+            audioPreviewBox.setVisible(false);
+            audioPreviewBox.setManaged(false);
+        }
+        // Hide audio controls (legacy)
         if (volumeSlider != null && volumeSlider.getParent() != null) {
             volumeSlider.getParent().getParent().setVisible(false);
         }
@@ -723,6 +746,11 @@ public class MainController implements Initializable {
             if (canvasStackPane != null) {
                 canvasStackPane.requestLayout();
             }
+        }
+        // Show audio preview controls when skin is selected
+        if (audioPreviewBox != null) {
+            audioPreviewBox.setVisible(true);
+            audioPreviewBox.setManaged(true);
             Platform.runLater(() -> {
                 Platform.runLater(this::scaleCanvasToFitContainer);
             });

@@ -99,7 +99,7 @@
                                     <Separator />
                                     
                                     <!-- Audio Controls -->
-                                    <VBox spacing="5.0" styleClass="audio-controls">
+                                    <VBox fx:id="audioPreviewBox" spacing="5.0" styleClass="audio-controls" visible="false" managed="false">
                                        <children>
                                           <Label text="Audio Preview" styleClass="section-title" />
                                           
