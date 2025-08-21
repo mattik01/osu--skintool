@@ -43,13 +43,15 @@
       "Bash(ldconfig:*)",
       "Bash(md5sum:*)",
       "WebSearch",
-      "WebFetch(domain:osu.ppy.sh)"
+      "WebFetch(domain:osu.ppy.sh)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "additionalDirectories": [
       "/root/skins/-    《DT》 - 『 東方Project 』 Paper Touhou Project  -",
       "/root/skins/Vaxei 2023",
-      "/root/skins/Incandescent Nebulae (ekoro edit)"
+      "/root/skins/Incandescent Nebulae (ekoro edit)",
+      "C:\\mnt\\c\\Users\\glaes\\Desktop\\github"
     ]
   }
 }

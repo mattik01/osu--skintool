@@ -113,26 +113,25 @@
                                              </children>
                                           </HBox>
                                           
-                                          <!-- Master Volume Control -->
+                                          <!-- Audio Volume Control (0-20%) -->
                                           <HBox alignment="CENTER_LEFT" spacing="10.0">
                                              <children>
-                                                <Label text="Master:" minWidth="50" />
-                                                <Slider fx:id="masterVolumeSlider" min="0" max="100" value="50" 
+                                                <Label text="Audio:" minWidth="60" />
+                                                <Slider fx:id="audioVolumeSlider" min="0" max="100" value="50" 
                                                         showTickLabels="false" showTickMarks="false" 
-                                                        maxWidth="200" HBox.hgrow="NEVER" />
-                                                <Label fx:id="lblMasterVolume" text="50%" minWidth="35" />
+                                                        maxWidth="180" HBox.hgrow="NEVER" />
+                                                <Label fx:id="lblAudioVolume" text="10%" minWidth="40" />
                                              </children>
                                           </HBox>
                                           
-                                          <!-- Mix Balance Control -->
+                                          <!-- Hitsound Volume Control (0-100%) -->
                                           <HBox alignment="CENTER_LEFT" spacing="10.0">
                                              <children>
-                                                <Label text="Mix:" minWidth="50" />
-                                                <Label text="Music" style="-fx-font-size: 10px;" />
-                                                <Slider fx:id="mixBalanceSlider" min="0" max="100" value="50" 
+                                                <Label text="Hitsounds:" minWidth="60" />
+                                                <Slider fx:id="hitsoundVolumeSlider" min="0" max="100" value="80" 
                                                         showTickLabels="false" showTickMarks="false" 
-                                                        maxWidth="150" HBox.hgrow="NEVER" />
-                                                <Label text="Hitsounds" style="-fx-font-size: 10px;" />
+                                                        maxWidth="180" HBox.hgrow="NEVER" />
+                                                <Label fx:id="lblHitsoundVolume" text="800%" minWidth="40" />
                                              </children>
                                           </HBox>
                                           
