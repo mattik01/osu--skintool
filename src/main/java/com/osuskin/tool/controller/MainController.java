@@ -85,12 +85,9 @@ public class MainController implements Initializable {
     // Audio Controls
     @FXML private VBox audioPreviewBox;
     @FXML private ComboBox<String> sampleSelector;
-    @FXML private ToggleButton btnPlayPause;
-    @FXML private CheckBox loopCheckbox;
+    @FXML private Button btnPlayPause;
     @FXML private Slider audioVolumeSlider;
-    @FXML private Label lblAudioVolume;
     @FXML private Slider hitsoundVolumeSlider;
-    @FXML private Label lblHitsoundVolume;
     @FXML private Button btnPlayHitsounds;
     @FXML private Button btnPlayMisc;
     @FXML private Button btnStopAudio;
@@ -600,7 +597,10 @@ public class MainController implements Initializable {
                 if (selected != null) {
                     logger.info("Sample selected: {}", selected);
                     audioMixerService.loadSample(selected);
-                    updatePlayPauseButton();
+                    // Reset play button
+                    if (btnPlayPause != null) {
+                        btnPlayPause.setText("▶");
+                    }
                     // Auto-load the first sample but don't auto-play
                 }
             });
@@ -611,8 +611,6 @@ public class MainController implements Initializable {
             audioVolumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
                 double sliderValue = newValue.doubleValue();
                 // Display shows 0-20% range based on slider position
-                double displayPercentage = sliderValue * 0.2;  // 0-100 slider -> 0-20% display
-                lblAudioVolume.setText(String.format("%.0f%%", displayPercentage));
                 // Pass normalized value (0-1) to service
                 audioMixerService.setAudioVolume(sliderValue / 100.0);
             });
@@ -623,16 +621,9 @@ public class MainController implements Initializable {
             hitsoundVolumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
                 double sliderValue = newValue.doubleValue();
                 // Display as 0-1000% to show the boost level
-                double displayPercentage = sliderValue * 10.0;  // 0-100 slider -> 0-1000% display
-                lblHitsoundVolume.setText(String.format("%.0f%%", displayPercentage));
                 // Pass normalized value (0-1) to service
                 audioMixerService.setHitsoundVolume(sliderValue / 100.0);
             });
-        }
-        
-        // Setup loop checkbox
-        if (loopCheckbox != null) {
-            loopCheckbox.setSelected(true);
         }
     }
     
@@ -649,39 +640,105 @@ public class MainController implements Initializable {
                 sampleSelector.setValue(firstSample);
                 // Auto-load the first sample
                 audioMixerService.loadSample(firstSample);
-                updatePlayPauseButton();
+                // Reset play button
+                if (btnPlayPause != null) {
+                    btnPlayPause.setText("▶");
+                }
             }
         }
     }
     
     @FXML
     private void onTogglePlayPause() {
-        logger.info("Toggle play/pause button clicked");
-        audioMixerService.togglePlayPause();
-        updatePlayPauseButton();
-    }
-    
-    @FXML
-    private void onLoopChanged() {
-        if (loopCheckbox != null) {
-            audioMixerService.setLooping(loopCheckbox.isSelected());
-        }
-    }
-    
-    private void updatePlayPauseButton() {
-        if (btnPlayPause != null) {
-            btnPlayPause.setText(audioMixerService.isPlaying() ? "⏸" : "▶");
-        }
+        logger.info("Play button clicked");
+        // Play once only, no looping
+        audioMixerService.setLooping(false);
+        audioMixerService.play();
     }
     
     private void setupCanvasResizeListener() {
-        // No dynamic resizing needed - canvas is fixed size
-        // The canvas is already set to 683x384 in FXML
-        // which is exactly half of native 1366x768 resolution
+        // Listen for window resize events
+        if (canvasStackPane != null) {
+            // Add listener to detect when the container size changes
+            canvasStackPane.widthProperty().addListener((obs, oldVal, newVal) -> {
+                handleCanvasContainerResize();
+            });
+            canvasStackPane.heightProperty().addListener((obs, oldVal, newVal) -> {
+                handleCanvasContainerResize();
+            });
+        }
+        
+        // Also listen for split pane divider changes
+        if (mainSplitPane != null) {
+            for (SplitPane.Divider divider : mainSplitPane.getDividers()) {
+                divider.positionProperty().addListener((obs, oldVal, newVal) -> {
+                    handleCanvasContainerResize();
+                });
+            }
+        }
+    }
+    
+    // Timer for debouncing resize events
+    private javafx.animation.Timeline resizeTimer;
+    
+    /**
+     * Handle container resize with debouncing to only act AFTER resize completes.
+     */
+    private void handleCanvasContainerResize() {
+        // Cancel previous timer if still running
+        if (resizeTimer != null) {
+            resizeTimer.stop();
+        }
+        
+        // Create new timer that fires after 300ms of no resize events
+        resizeTimer = new javafx.animation.Timeline(
+            new javafx.animation.KeyFrame(
+                javafx.util.Duration.millis(300),
+                e -> updateCanvasSize()
+            )
+        );
+        resizeTimer.play();
+    }
+    
+    /**
+     * Update canvas size to best fit the container.
+     */
+    private void updateCanvasSize() {
+        if (canvasStackPane == null || gameplayCanvas == null) {
+            return;
+        }
+        
+        double effectiveWidth = canvasStackPane.getWidth();
+        double containerHeight = canvasStackPane.getHeight();
+        
+        // If we have a split pane, calculate the actual visible width
+        if (mainSplitPane != null && !mainSplitPane.getDividers().isEmpty()) {
+            try {
+                double windowWidth = mainSplitPane.getWidth();
+                double dividerPosition = mainSplitPane.getDividers().get(0).getPosition();
+                double leftPanelWidth = windowWidth * dividerPosition;
+                double rightPanelWidth = windowWidth - leftPanelWidth - 5; // 5px for divider
+                
+                // Use the actual visible width (might be less than canvasStackPane.getWidth())
+                effectiveWidth = Math.min(rightPanelWidth, canvasStackPane.getWidth());
+                
+                logger.debug("Canvas visible space: {}x{} (divider at {:.1f}%)", 
+                            effectiveWidth, containerHeight, dividerPosition * 100);
+            } catch (Exception e) {
+                // Fall back to container width if calculation fails
+                logger.debug("Using container width as fallback: {}", e.getMessage());
+            }
+        }
+        
+        // Let the renderer decide the best size based on actual visible space
+        if (enhancedRenderer != null) {
+            enhancedRenderer.onCanvasResize(effectiveWidth, containerHeight);
+        }
     }
     
     private void scaleCanvasToFitContainer() {
-        // Not used anymore - canvas is fixed size
+        // Trigger size update
+        updateCanvasSize();
     }
     
     private void hidePreviewControls() {
@@ -853,7 +910,12 @@ public class MainController implements Initializable {
                         scaleCanvasToFitContainer();
                         if (useEnhancedRenderer) {
                             enhancedRenderer.initialize();
-                            enhancedRenderer.onCanvasResize();
+                            // Trigger initial resize with container dimensions
+                            if (canvasStackPane != null) {
+                                enhancedRenderer.onCanvasResize(canvasStackPane.getWidth(), canvasStackPane.getHeight());
+                            } else {
+                                enhancedRenderer.onCanvasResize();
+                            }
                         } else {
                             simpleRenderer.initialize();
                         }

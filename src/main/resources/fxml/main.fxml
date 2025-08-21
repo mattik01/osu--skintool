@@ -101,44 +101,35 @@
                                     <!-- Audio Controls -->
                                     <VBox fx:id="audioPreviewBox" spacing="5.0" styleClass="audio-controls" visible="false" managed="false">
                                        <children>
-                                          <Label text="Audio Preview" styleClass="section-title" />
-                                          
                                           <!-- Beatmap Sample Selection -->
                                           <HBox alignment="CENTER_LEFT" spacing="10.0">
                                              <children>
-                                                <Label text="Sample:" minWidth="50" />
                                                 <ComboBox fx:id="sampleSelector" prefWidth="200" promptText="Select beatmap sample" />
-                                                <ToggleButton fx:id="btnPlayPause" text="▶" prefWidth="40" onAction="#onTogglePlayPause" />
-                                                <CheckBox fx:id="loopCheckbox" text="Loop" selected="true" onAction="#onLoopChanged" />
+                                                <Button fx:id="btnPlayPause" text="▶" prefWidth="40" onAction="#onTogglePlayPause" />
                                              </children>
                                           </HBox>
                                           
-                                          <!-- Audio Volume Control (0-20%) -->
+                                          <!-- Audio Volume Control -->
                                           <HBox alignment="CENTER_LEFT" spacing="10.0">
                                              <children>
-                                                <Label text="Audio:" minWidth="60" />
+                                                <Label text="🎵" minWidth="20" />
                                                 <Slider fx:id="audioVolumeSlider" min="0" max="100" value="50" 
                                                         showTickLabels="false" showTickMarks="false" 
                                                         maxWidth="180" HBox.hgrow="NEVER" />
-                                                <Label fx:id="lblAudioVolume" text="10%" minWidth="40" />
                                              </children>
                                           </HBox>
                                           
-                                          <!-- Hitsound Volume Control (0-100%) -->
+                                          <!-- Hitsound Volume Control -->
                                           <HBox alignment="CENTER_LEFT" spacing="10.0">
                                              <children>
-                                                <Label text="Hitsounds:" minWidth="60" />
-                                                <Slider fx:id="hitsoundVolumeSlider" min="0" max="100" value="80" 
+                                                <Label text="🥁" minWidth="20" />
+                                                <Slider fx:id="hitsoundVolumeSlider" min="0" max="100" value="50" 
                                                         showTickLabels="false" showTickMarks="false" 
                                                         maxWidth="180" HBox.hgrow="NEVER" />
-                                                <Label fx:id="lblHitsoundVolume" text="800%" minWidth="40" />
                                              </children>
                                           </HBox>
                                           
-                                          <Separator />
-                                          
-                                          <!-- Legacy Sound Buttons -->
-                                          <Label text="Test Skin Sounds" styleClass="section-subtitle" />
+                                          <!-- Sound Test Buttons -->
                                           <HBox alignment="CENTER_LEFT" spacing="5.0">
                                              <children>
                                                 <Button fx:id="btnPlayHitsounds" text="Hitsounds" 
@@ -149,9 +140,6 @@
                                                         onAction="#onStopAudio" prefWidth="50" />
                                              </children>
                                           </HBox>
-                                          
-                                          <!-- Currently Playing -->
-                                          <Label fx:id="lblNowPlaying" text="Nothing playing" styleClass="now-playing" />
                                        </children>
                                        <padding>
                                           <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
@@ -163,8 +151,6 @@
                                     <!-- Gameplay Preview Canvas -->
                                     <VBox fx:id="previewContainer" VBox.vgrow="ALWAYS" maxWidth="Infinity" spacing="5.0">
                                        <children>
-                                          <Label text="Visual Preview" styleClass="section-title" />
-                                          
                                           <!-- Canvas Container -->
                                           <StackPane fx:id="canvasStackPane" VBox.vgrow="ALWAYS" styleClass="canvas-container" alignment="CENTER" maxWidth="Infinity" maxHeight="Infinity">
                                              <children>

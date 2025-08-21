@@ -65,6 +65,24 @@ public class GameplayRenderer {
     // Rendering constants
     private static final double BASE_CIRCLE_SIZE = 80;  // Base size for fallback circles
     
+    // Supported preview sizes (16:9 aspect ratio)
+    private static final int[][] SUPPORTED_SIZES = {
+        {320, 180},   // 180p  (tiny)
+        {426, 240},   // 240p  (very small)
+        {512, 288},   // 288p  (small)
+        {640, 360},   // 360p  (medium-small)
+        {768, 432},   // 432p  (medium)
+        {854, 480},   // 480p  (medium-large)
+        {960, 540},   // 540p  (large)
+        {1024, 576},  // 576p  (very large)
+        {1280, 720},  // 720p  (HD)
+        {1366, 768}   // Native (full resolution)
+    };
+    
+    // Current selected size
+    private int currentSizeIndex = 3;  // Default to 360p
+    private double renderScale = 1.0;  // Scale factor from native to current size
+    
     // Statistics
     private int combo = 0;
     private int score = 0;
@@ -119,10 +137,79 @@ public class GameplayRenderer {
     }
     
     /**
-     * Handle canvas resize.
+     * Handle canvas resize with available container dimensions.
+     */
+    public void onCanvasResize(double containerWidth, double containerHeight) {
+        // Select appropriate size based on available space
+        selectBestSize(containerWidth, containerHeight);
+        setupHitObjects(); // Recalculate positions
+    }
+    
+    /**
+     * Handle canvas resize without explicit dimensions (use current canvas size).
      */
     public void onCanvasResize() {
-        setupHitObjects(); // Recalculate positions
+        // Use parent container bounds if available
+        if (canvas.getParent() != null) {
+            javafx.scene.layout.Region parent = (javafx.scene.layout.Region) canvas.getParent();
+            onCanvasResize(parent.getWidth(), parent.getHeight());
+        } else {
+            // Fallback to canvas size
+            onCanvasResize(canvas.getWidth(), canvas.getHeight());
+        }
+    }
+    
+    /**
+     * Select the best preview size that fits within the given dimensions.
+     */
+    private void selectBestSize(double availableWidth, double availableHeight) {
+        // Ensure we have valid dimensions
+        if (availableWidth <= 0 || availableHeight <= 0) {
+            return;
+        }
+        
+        // Find the largest size that fits
+        int bestIndex = 0;
+        for (int i = SUPPORTED_SIZES.length - 1; i >= 0; i--) {
+            if (SUPPORTED_SIZES[i][0] <= availableWidth && 
+                SUPPORTED_SIZES[i][1] <= availableHeight) {
+                bestIndex = i;
+                break;
+            }
+        }
+        
+        // Update if changed
+        if (bestIndex != currentSizeIndex) {
+            currentSizeIndex = bestIndex;
+            int width = SUPPORTED_SIZES[currentSizeIndex][0];
+            int height = SUPPORTED_SIZES[currentSizeIndex][1];
+            
+            // Calculate scale from native resolution (1366x768) to selected size
+            renderScale = width / 1366.0;
+            
+            // Update canvas size
+            canvas.setWidth(width);
+            canvas.setHeight(height);
+            
+            // Update UI scale
+            if (gameplayUI != null) {
+                gameplayUI.setScale(renderScale);
+            }
+            
+            String sizeLabel = getSizeLabel(currentSizeIndex);
+            logger.info("Selected preview size: {}x{} ({}, scale: {:.2f})", width, height, sizeLabel, renderScale);
+        }
+    }
+    
+    /**
+     * Get a human-readable label for the size index.
+     */
+    private String getSizeLabel(int index) {
+        String[] labels = {
+            "tiny", "very small", "small", "medium-small", "medium",
+            "medium-large", "large", "very large", "HD", "native"
+        };
+        return index >= 0 && index < labels.length ? labels[index] : "custom";
     }
     
     private void loadElements() {
@@ -349,6 +436,8 @@ public class GameplayRenderer {
             case HIT_300: perfect300++; break;
             case HIT_100: good100++; break;
             case HIT_50: meh50++; break;
+            case MISS: break;  // Miss doesn't contribute to accuracy positively
+            case NONE: break;  // Not hit yet, ignore
         }
         
         if (totalHits > 0) {
