@@ -121,6 +121,17 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>${main.class}</mainClass>
+                    <commandlineArgs></commandlineArgs>
+                    <options>
+                        <option>-Xms512m</option>
+                        <option>-Xmx2048m</option>
+                        <option>-XX:+UseG1GC</option>
+                        <option>-XX:MaxGCPauseMillis=50</option>
+                        <option>-XX:+UseStringDeduplication</option>
+                        <option>-Dprism.order=d3d,sw</option>
+                        <option>-Dprism.vsync=false</option>
+                        <option>-Djavafx.animation.pulse=60</option>
+                    </options>
                 </configuration>
             </plugin>
 

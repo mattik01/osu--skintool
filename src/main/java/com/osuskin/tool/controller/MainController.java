@@ -85,11 +85,10 @@ public class MainController implements Initializable {
     @FXML private ComboBox<String> sampleSelector;
     @FXML private ToggleButton btnPlayPause;
     @FXML private CheckBox loopCheckbox;
-    @FXML private Slider masterVolumeSlider;
-    @FXML private Label lblMasterVolume;
-    @FXML private Slider mixBalanceSlider;
-    @FXML private Slider volumeSlider;
-    @FXML private Label lblVolume;
+    @FXML private Slider audioVolumeSlider;
+    @FXML private Label lblAudioVolume;
+    @FXML private Slider hitsoundVolumeSlider;
+    @FXML private Label lblHitsoundVolume;
     @FXML private Button btnPlayHitsounds;
     @FXML private Button btnPlayMisc;
     @FXML private Button btnStopAudio;
@@ -578,14 +577,6 @@ public class MainController implements Initializable {
     }
     
     private void setupPreviewControls() {
-        // Setup volume slider
-        if (volumeSlider != null) {
-            volumeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-                double volume = newVal.doubleValue();
-                lblVolume.setText(String.format("%.0f%%", volume));
-                updateAudioVolume(volume / 100.0);
-            });
-        }
     }
     
     private void setupAudioMixerControls() {
@@ -603,38 +594,27 @@ public class MainController implements Initializable {
             });
         }
         
-        // Setup master volume slider
-        if (masterVolumeSlider != null) {
-            masterVolumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-                double volume = newValue.doubleValue() / 100.0;
-                lblMasterVolume.setText(String.format("%.0f%%", newValue.doubleValue()));
-                audioMixerService.setMasterVolume(volume);
+        // Setup audio volume slider (0-20% actual volume)
+        if (audioVolumeSlider != null) {
+            audioVolumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+                double sliderValue = newValue.doubleValue();
+                // Display shows 0-20% range based on slider position
+                double displayPercentage = sliderValue * 0.2;  // 0-100 slider -> 0-20% display
+                lblAudioVolume.setText(String.format("%.0f%%", displayPercentage));
+                // Pass normalized value (0-1) to service
+                audioMixerService.setAudioVolume(sliderValue / 100.0);
             });
         }
         
-        // Setup mix balance slider (0 = full music, 100 = full hitsounds)
-        // Middle position (50) should give 80% hitsounds, 20% music
-        if (mixBalanceSlider != null) {
-            mixBalanceSlider.setValue(50.0); // Set default to middle
-            mixBalanceSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-                double sliderValue = newValue.doubleValue() / 100.0; // 0.0 to 1.0
-                
-                // Non-linear mapping: at slider=0.5, we want hitsounds=0.8, music=0.2
-                // Use exponential curve for more intuitive control
-                double hitsoundLevel, musicLevel;
-                
-                if (sliderValue <= 0.5) {
-                    // 0 to 50: music goes from 1.0 to 0.2, hitsounds from 0.0 to 0.8
-                    musicLevel = 1.0 - (sliderValue * 1.6);  // 1.0 -> 0.2
-                    hitsoundLevel = sliderValue * 1.6;        // 0.0 -> 0.8
-                } else {
-                    // 50 to 100: music goes from 0.2 to 0.0, hitsounds from 0.8 to 1.0
-                    musicLevel = 0.2 * (2.0 - sliderValue * 2.0);   // 0.2 -> 0.0
-                    hitsoundLevel = 0.8 + (sliderValue - 0.5) * 0.4; // 0.8 -> 1.0
-                }
-                
-                audioMixerService.setOriginalMixLevel(musicLevel);
-                audioMixerService.setHitsoundMixLevel(hitsoundLevel);
+        // Setup hitsound volume slider (displays 0-1000%, actual 0-100%)
+        if (hitsoundVolumeSlider != null) {
+            hitsoundVolumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+                double sliderValue = newValue.doubleValue();
+                // Display as 0-1000% to show the boost level
+                double displayPercentage = sliderValue * 10.0;  // 0-100 slider -> 0-1000% display
+                lblHitsoundVolume.setText(String.format("%.0f%%", displayPercentage));
+                // Pass normalized value (0-1) to service
+                audioMixerService.setHitsoundVolume(sliderValue / 100.0);
             });
         }
         
@@ -705,10 +685,6 @@ public class MainController implements Initializable {
             audioPreviewBox.setVisible(false);
             audioPreviewBox.setManaged(false);
         }
-        // Hide audio controls (legacy)
-        if (volumeSlider != null && volumeSlider.getParent() != null) {
-            volumeSlider.getParent().getParent().setVisible(false);
-        }
     }
     
     private void showLoadingIndicator() {
@@ -754,10 +730,6 @@ public class MainController implements Initializable {
             Platform.runLater(() -> {
                 Platform.runLater(this::scaleCanvasToFitContainer);
             });
-        }
-        // Show audio controls
-        if (volumeSlider != null && volumeSlider.getParent() != null) {
-            volumeSlider.getParent().getParent().setVisible(true);
         }
     }
     
@@ -861,7 +833,10 @@ public class MainController implements Initializable {
                 if (sound != null) {
                     Platform.runLater(() -> {
                         MediaPlayer player = new MediaPlayer(sound);
-                        player.setVolume(volumeSlider.getValue() / 100.0);
+                        // Use hitsound volume slider if available, otherwise default to 80%
+                        double volume = hitsoundVolumeSlider != null ? 
+                            hitsoundVolumeSlider.getValue() / 100.0 : 0.8;
+                        player.setVolume(volume);
                         player.play();
                         hitsoundPlayers.add(player);
                         
