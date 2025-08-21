@@ -198,7 +198,66 @@ src/main/resources/
   - Proper hit object timeline with overlap
   - Consistent scaling system for all elements
 
+## Performance Optimization Guidelines
+
+### Key Principles
+- **Async Everything**: All skin loading must be asynchronous to prevent UI freezes
+- **Manifest-Based Loading**: Pre-scan directories to avoid checking non-existent files
+- **Selective Loading**: Only load elements that exist and are needed for current view
+- **Resource Reuse**: Pre-initialize renderers at startup, reuse between skin switches
+- **Progressive Updates**: Fine-grained progress reporting for smooth UI feedback
+
+### Critical Performance Areas
+
+#### 1. Skin Loading
+- Use `AsyncSkinLoader` for all skin loading operations
+- Implement `SkinElementManifest` to track available elements
+- Never perform I/O operations on the UI thread
+- Clear previous preview immediately on skin change
+
+#### 2. File System Operations
+- Build element manifest with single directory scan
+- Cache file existence checks
+- Skip attempts to load non-existent elements
+- Use parallel loading for independent element groups
+
+#### 3. Animation Optimization
+- Smart scorebar-colour frame sampling: load maximum 10 frames regardless of total count
+- Use exponential/binary search to efficiently find frame range (0 to N)
+- Sample frames evenly across animation (if >10 frames, load at intervals)
+- 95% reduction for skins with many frames (10 frames instead of 200+)
+- Implement frame skipping for other high frame-count animations
+- Use weak references for non-critical frames
+
+#### 4. Memory Management
+- Implement LRU cache for skin elements
+- Release resources immediately on skin switch
+- Downsample large images for preview if needed
+- Clear caches when switching skins
+
+#### 5. Progress Reporting
+- Update progress per element, not per batch
+- Use atomic counters for thread-safe progress
+- Smooth progress bar updates with Platform.runLater()
+- Show meaningful status messages during loading
+
+### Performance Targets
+- Skin load time: < 200ms for average skin
+- Zero UI freezes during loading
+- 80% reduction in file system operations
+- Smooth 60 FPS progress updates
+- Instant preview clearing on skin change
+
+### Anti-Patterns to Avoid
+- ❌ Loading all possible elements blindly
+- ❌ Synchronous I/O on UI thread
+- ❌ Creating new renderers for each skin
+- ❌ Loading all animation frames
+- ❌ Checking for non-existent files repeatedly
+
 ## Related Documentation
+- `PERFORMANCE_OPTIMIZATION.md` - Detailed performance optimization strategies
+- `PERFORMANCE_IMPLEMENTATION_PLAN.md` - Step-by-step implementation guide
 - `OSU_SKIN_RENDERING.md` - Comprehensive guide to osu! skin element rendering
 - `src/main/resources/default-skin/README.md` - Default skin setup instructions
 - `src/main/resources/default-skin/REQUIRED_ELEMENTS.md` - Complete element list
