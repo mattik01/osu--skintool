@@ -81,20 +81,44 @@ public class AsyncPreviewLoader {
                 PerformanceMonitor.recordMetadata("skinPath", skinDir.toString());
                 PerformanceMonitor.recordMetadata("skinName", skin.getName());
                 
-                updateMessage("Loading skin manifest...");
+                updateMessage("Checking manifest cache...");
                 updateProgress(0, 100);
                 
-                // Step 1: Create element loader which will handle manifest loading (10% progress)
+                // Step 1: Create element loader and load/build manifest with progress tracking
                 PerformanceMonitor.startStep("Manifest Loading");
-                SkinElementLoader elementLoader = new SkinElementLoader(skinDir);
+                
+                // Create a special loader to check manifest status
+                SkinElementLoader elementLoader = new SkinElementLoader(skinDir, false); // Don't auto-load manifest
+                
+                // Load manifest with progress tracking
+                SkinElementLoader.ManifestLoadResult manifestResult = elementLoader.loadOrCreateManifest(progress -> {
+                    Platform.runLater(() -> {
+                        if (progress.usingCache) {
+                            // Fast path - using cached manifest
+                            updateMessage("✓ Using cached manifest");
+                            updateProgress(10, 100);
+                        } else if (progress.building) {
+                            // Slow path - building manifest
+                            double manifestProgress = progress.progress * 0.1; // Scale to 0-10% of total
+                            updateMessage("Building manifest: " + progress.message);
+                            updateProgress(manifestProgress, 100);
+                        }
+                    });
+                });
+                
                 PerformanceMonitor.endStep("Manifest Loading");
                 
                 if (cancelRequested || isCancelled()) {
                     return new PreviewLoadResult(null, Collections.emptyMap(), 0, true);
                 }
                 
+                // Report manifest status
+                String manifestStatus = manifestResult.wasCached ? 
+                    String.format("Manifest loaded from cache (%dms)", manifestResult.loadTimeMs) :
+                    String.format("Manifest built (%dms)", manifestResult.loadTimeMs);
+                    
                 updateProgress(10, 100);
-                updateMessage("Manifest loaded");
+                updateMessage(manifestStatus);
                 
                 // Step 2: Determine what elements to load (15% progress)
                 PerformanceMonitor.startStep("Element Discovery");

@@ -47,6 +47,14 @@ public class SkinManifestBuilder {
      * Build a complete manifest for a skin directory.
      */
     public static SkinElementManifest buildManifest(Path skinDirectory) {
+        return buildManifest(skinDirectory, null);
+    }
+    
+    /**
+     * Build a complete manifest for a skin directory with progress reporting.
+     */
+    public static SkinElementManifest buildManifest(Path skinDirectory, 
+            java.util.function.Consumer<SkinElementLoader.ManifestProgress> progressCallback) {
         if (skinDirectory == null || !Files.exists(skinDirectory)) {
             logger.warn("Cannot build manifest for non-existent directory: {}", skinDirectory);
             return null;
@@ -58,6 +66,12 @@ public class SkinManifestBuilder {
         SkinElementManifest manifest = new SkinElementManifest(skinDirectory.toString());
         
         try {
+            // Report progress: Starting scan
+            if (progressCallback != null) {
+                progressCallback.accept(new SkinElementLoader.ManifestProgress(
+                    false, true, 10, "Scanning directory..."));
+            }
+            
             // Get directory metadata
             long dirModTime = skinDirectory.toFile().lastModified();
             
@@ -65,11 +79,29 @@ public class SkinManifestBuilder {
             Map<String, Path> allFiles = scanDirectory(skinDirectory);
             manifest.setMetadata(dirModTime, allFiles.size());
             
+            // Report progress: Processing elements
+            if (progressCallback != null) {
+                progressCallback.accept(new SkinElementLoader.ManifestProgress(
+                    false, true, 40, "Processing " + allFiles.size() + " files..."));
+            }
+            
             // Process regular elements
             processRegularElements(allFiles, manifest);
             
+            // Report progress: Processing animations
+            if (progressCallback != null) {
+                progressCallback.accept(new SkinElementLoader.ManifestProgress(
+                    false, true, 70, "Processing animations..."));
+            }
+            
             // Process animations with smart frame selection
             processAnimations(allFiles, manifest);
+            
+            // Report progress: Finalizing
+            if (progressCallback != null) {
+                progressCallback.accept(new SkinElementLoader.ManifestProgress(
+                    false, true, 90, "Finalizing manifest..."));
+            }
             
             // Mark required elements that need fallback
             markFallbackElements(manifest);
@@ -77,6 +109,13 @@ public class SkinManifestBuilder {
             long elapsed = System.currentTimeMillis() - startTime;
             logger.info("Manifest built in {}ms: {} elements, {} animations", 
                 elapsed, manifest.getTotalElementCount(), manifest.animationFrames.size());
+            
+            // Report progress: Complete
+            if (progressCallback != null) {
+                progressCallback.accept(new SkinElementLoader.ManifestProgress(
+                    false, false, 100, 
+                    String.format("Manifest built (%d elements)", manifest.getTotalElementCount())));
+            }
             
         } catch (Exception e) {
             logger.error("Failed to build manifest for: " + skinDirectory, e);

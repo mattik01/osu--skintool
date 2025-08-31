@@ -43,7 +43,25 @@ public class SkinElementLoader {
     private static final int MAX_MISMATCHES_BEFORE_REBUILD = 3;
     
     public SkinElementLoader(Path skinDirectory) {
-        setSkinDirectory(skinDirectory);
+        this(skinDirectory, true);
+    }
+    
+    /**
+     * Create a new SkinElementLoader.
+     * @param skinDirectory The skin directory path
+     * @param autoLoadManifest If true, automatically load/create manifest
+     */
+    public SkinElementLoader(Path skinDirectory, boolean autoLoadManifest) {
+        this.skinDirectory = skinDirectory;
+        clearCache();
+        mismatchCount.set(0);
+        
+        if (autoLoadManifest && skinDirectory != null && Files.exists(skinDirectory)) {
+            loadOrCreateManifest();
+        } else if (!autoLoadManifest) {
+            // Manifest will be loaded manually
+            this.manifest = null;
+        }
     }
     
     /**
@@ -65,7 +83,18 @@ public class SkinElementLoader {
      * Load existing manifest or create new one.
      */
     private void loadOrCreateManifest() {
+        loadOrCreateManifest(null);
+    }
+    
+    /**
+     * Load existing manifest or create new one with progress reporting.
+     * @param progressCallback Optional callback for reporting manifest build progress
+     */
+    public ManifestLoadResult loadOrCreateManifest(java.util.function.Consumer<ManifestProgress> progressCallback) {
         PerformanceMonitor.startStep("Load/Create Manifest");
+        
+        boolean wasCached = false;
+        long startTime = System.currentTimeMillis();
         
         // Try to load cached manifest
         manifest = ManifestCache.loadManifest(skinDirectory);
@@ -73,22 +102,72 @@ public class SkinElementLoader {
         if (manifest == null || !manifest.isLikelyValid(skinDirectory)) {
             // Build new manifest
             logger.info("Building new manifest for: {}", skinDirectory);
-            manifest = SkinManifestBuilder.buildManifest(skinDirectory);
+            
+            if (progressCallback != null) {
+                progressCallback.accept(new ManifestProgress(false, true, 0, "Building manifest..."));
+            }
+            
+            manifest = SkinManifestBuilder.buildManifest(skinDirectory, progressCallback);
             
             if (manifest != null) {
                 // Cache the manifest
                 ManifestCache.saveManifest(skinDirectory, manifest);
+                if (progressCallback != null) {
+                    progressCallback.accept(new ManifestProgress(false, false, 100, "Manifest built and cached"));
+                }
             }
         } else {
             logger.debug("Using cached manifest for: {}", skinDirectory);
+            wasCached = true;
+            if (progressCallback != null) {
+                progressCallback.accept(new ManifestProgress(true, false, 100, "Using cached manifest"));
+            }
         }
         
         PerformanceMonitor.endStep("Load/Create Manifest");
         
+        long loadTime = System.currentTimeMillis() - startTime;
+        
         if (manifest != null) {
-            logger.info("Manifest loaded: {} elements, {} animations", 
+            logger.info("Manifest loaded: {} elements, {} animations, cached={}, time={}ms", 
                 manifest.getTotalElementCount(), 
-                manifest.getAnimationFrames("") != null ? manifest.getAnimationFrames("").size() : 0);
+                manifest.getAnimationFrames("") != null ? manifest.getAnimationFrames("").size() : 0,
+                wasCached,
+                loadTime);
+        }
+        
+        return new ManifestLoadResult(manifest, wasCached, loadTime);
+    }
+    
+    /**
+     * Result of manifest loading operation.
+     */
+    public static class ManifestLoadResult {
+        public final SkinElementManifest manifest;
+        public final boolean wasCached;
+        public final long loadTimeMs;
+        
+        public ManifestLoadResult(SkinElementManifest manifest, boolean wasCached, long loadTimeMs) {
+            this.manifest = manifest;
+            this.wasCached = wasCached;
+            this.loadTimeMs = loadTimeMs;
+        }
+    }
+    
+    /**
+     * Progress information for manifest operations.
+     */
+    public static class ManifestProgress {
+        public final boolean usingCache;
+        public final boolean building;
+        public final double progress;
+        public final String message;
+        
+        public ManifestProgress(boolean usingCache, boolean building, double progress, String message) {
+            this.usingCache = usingCache;
+            this.building = building;
+            this.progress = progress;
+            this.message = message;
         }
     }
     
@@ -391,6 +470,13 @@ public class SkinElementLoader {
     
     public Skin getCurrentSkin() {
         return currentSkin;
+    }
+    
+    /**
+     * Get the current manifest.
+     */
+    public SkinElementManifest getManifest() {
+        return manifest;
     }
     
     /**

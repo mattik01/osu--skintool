@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class PerformanceMonitor {
     // TOGGLE THIS TO ENABLE/DISABLE PERFORMANCE LOGGING
-    private static final boolean ENABLED = true;  // Set to true to see performance logs in console
+    private static final boolean ENABLED = false;  // Set to true to see performance logs in console
     
     private static final Map<String, Long> stepStartTimes = new ConcurrentHashMap<>();
     private static final Map<String, Long> stepMemoryBefore = new ConcurrentHashMap<>();

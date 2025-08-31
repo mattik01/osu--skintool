@@ -977,16 +977,27 @@ public class MainController implements Initializable {
     }
     
     private void updateElementInfo() {
-        if (elementLoader == null) return;
+        // Get the currently selected skin
+        Skin selectedSkin = listSkins.getSelectionModel().getSelectedItem();
         
-        SkinElementLoader.SkinElementStats stats = elementLoader.getElementStats();
-        
-        int totalElements = stats.elementsByCategory.values().stream()
-            .mapToInt(Integer::intValue).sum();
-        
-        int missingRequired = stats.totalRequiredElements - stats.presentRequiredElements;
-        
-        lblElementInfo.setText(String.format("Elements: %d | Missing: %d", totalElements, missingRequired));
+        if (selectedSkin != null && !selectedSkin.isSpecial()) {
+            // Try to get the actual element count from the loader if available
+            if (elementLoader != null && elementLoader.getManifest() != null) {
+                int elementCount = elementLoader.getManifest().getTotalElementCount();
+                lblElementInfo.setText(String.format("%d elements", elementCount));
+            } else {
+                // Fall back to file count if available and valid
+                int fileCount = selectedSkin.getFileCount();
+                if (fileCount > 0) {
+                    lblElementInfo.setText(String.format("%d files", fileCount));
+                } else {
+                    // Don't show anything if we don't have valid data
+                    lblElementInfo.setText("");
+                }
+            }
+        } else {
+            lblElementInfo.setText("");
+        }
     }
     
     @FXML

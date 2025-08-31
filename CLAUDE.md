@@ -119,6 +119,13 @@ src/main/resources/
 - Path objects preferred over String paths
 - Builder pattern not used - prefer constructors and setters
 
+### Performance Monitoring
+- **PerformanceMonitor**: Detailed performance logging utility
+- **Toggle Flag**: Located in `PerformanceMonitor.java` line 8
+  - Set `ENABLED = true` to enable detailed performance logs
+  - Set `ENABLED = false` for production/normal use (default)
+- Tracks timing, memory usage, and operation steps when enabled
+
 ### Error Handling
 - IOException for file operations
 - Runtime exceptions for configuration errors  
