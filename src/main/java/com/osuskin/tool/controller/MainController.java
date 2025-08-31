@@ -10,7 +10,6 @@ import com.osuskin.tool.service.SkinElementLoader;
 import com.osuskin.tool.service.ManifestCache;
 import com.osuskin.tool.service.AudioMixerService;
 import com.osuskin.tool.service.AsyncPreviewLoader;
-import com.osuskin.tool.view.SimpleGameplayRenderer;
 import com.osuskin.tool.view.gameplay.GameplayRenderer;
 import com.osuskin.tool.util.ConfigurationManager;
 import com.osuskin.tool.util.OsuPathDetector;
@@ -133,9 +132,7 @@ public class MainController implements Initializable {
     
     // Preview components
     private SkinElementLoader elementLoader;
-    private SimpleGameplayRenderer simpleRenderer;
     private GameplayRenderer enhancedRenderer;
-    private boolean useEnhancedRenderer = true; // Toggle for renderer type
     private MediaPlayer currentAudioPlayer;
     private List<MediaPlayer> hitsoundPlayers = new ArrayList<>();
     private AnimationTimer animationTimer;
@@ -816,9 +813,8 @@ public class MainController implements Initializable {
         // Create a dummy element loader for initialization
         elementLoader = new SkinElementLoader(null);
         
-        // Create both renderers but don't initialize yet (no skin loaded)
+        // Create renderer but don't initialize yet (no skin loaded)
         enhancedRenderer = new GameplayRenderer(gameplayCanvas, elementLoader);
-        simpleRenderer = new SimpleGameplayRenderer(gameplayCanvas, elementLoader);
         
     }
     
@@ -897,14 +893,9 @@ public class MainController implements Initializable {
                 
                 // Initialize renderer asynchronously to avoid blocking UI
                 CompletableFuture.runAsync(() -> {
-                    // Update renderers
-                    if (useEnhancedRenderer) {
-                        enhancedRenderer.setElementLoader(elementLoader);
-                        enhancedRenderer.initialize();
-                    } else {
-                        simpleRenderer.setElementLoader(elementLoader);
-                        simpleRenderer.initialize();
-                    }
+                    // Update renderer
+                    enhancedRenderer.setElementLoader(elementLoader);
+                    enhancedRenderer.initialize();
                 }).thenRun(() -> {
                     // Back on UI thread after initialization
                     Platform.runLater(() -> {
@@ -913,13 +904,11 @@ public class MainController implements Initializable {
                             return;
                         }
                         
-                        // Trigger initial resize for enhanced renderer
-                        if (useEnhancedRenderer) {
-                            if (canvasStackPane != null) {
-                                enhancedRenderer.onCanvasResize(canvasStackPane.getWidth(), canvasStackPane.getHeight());
-                            } else {
-                                enhancedRenderer.onCanvasResize();
-                            }
+                        // Trigger initial resize for renderer
+                        if (canvasStackPane != null) {
+                            enhancedRenderer.onCanvasResize(canvasStackPane.getWidth(), canvasStackPane.getHeight());
+                        } else {
+                            enhancedRenderer.onCanvasResize();
                         }
                         
                         // Update element info
@@ -1091,8 +1080,7 @@ public class MainController implements Initializable {
     }
     
     private void startAutoplayAnimation() {
-        if (useEnhancedRenderer && enhancedRenderer == null) return;
-        if (!useEnhancedRenderer && simpleRenderer == null) return;
+        if (enhancedRenderer == null) return;
         
         
         if (animationTimer != null) {
@@ -1111,13 +1099,8 @@ public class MainController implements Initializable {
                 double deltaTime = (now - lastUpdate) / 1_000_000_000.0;
                 lastUpdate = now;
                 
-                if (useEnhancedRenderer) {
-                    enhancedRenderer.update(deltaTime);
-                    enhancedRenderer.render();
-                } else {
-                    simpleRenderer.update(deltaTime);
-                    simpleRenderer.render();
-                }
+                enhancedRenderer.update(deltaTime);
+                enhancedRenderer.render();
             }
         };
         

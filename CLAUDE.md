@@ -39,7 +39,6 @@ A high-performance JavaFX application for managing and previewing osu! skins wit
 
 ### View Components
 - **GameplayRenderer**: Full gameplay preview with animations
-- **SimpleGameplayRenderer**: Legacy basic renderer
 - **GameplayUI**: Overlay UI (health, score, combo)
 - **HitCircle/Slider**: Hit object implementations
 - **SharedElementCache**: Shared cache for gameplay elements
