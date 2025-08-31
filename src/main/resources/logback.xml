@@ -23,21 +23,28 @@
     </appender>
     
     <!-- Logger for application packages -->
-    <logger name="com.osuskin.tool" level="INFO"/>
+    <logger name="com.osuskin.tool" level="WARN"/>
     
-    <!-- Granular control for specific classes/packages -->
-    <!-- Set these to DEBUG to see detailed loading information -->
-    <logger name="com.osuskin.tool.service.SkinElementLoader" level="WARN"/>
-    <logger name="com.osuskin.tool.service.SkinScannerService" level="INFO"/>
-    <logger name="com.osuskin.tool.service.HitsoundGeneratorService" level="INFO"/>
-    <logger name="com.osuskin.tool.view.SimpleGameplayRenderer" level="INFO"/>
-    <logger name="com.osuskin.tool.view.gameplay" level="INFO"/>
-    <logger name="com.osuskin.tool.service.AudioMixerService" level="INFO"/>
+    <!-- Critical components - only errors and warnings -->
+    <logger name="com.osuskin.tool.controller.MainController" level="INFO"/>
+    <logger name="com.osuskin.tool.service.SkinElementLoader" level="ERROR"/>
+    <logger name="com.osuskin.tool.service.SkinScannerService" level="WARN"/>
+    <logger name="com.osuskin.tool.service.HitsoundGeneratorService" level="ERROR"/>
+    <logger name="com.osuskin.tool.view.SimpleGameplayRenderer" level="ERROR"/>
+    <logger name="com.osuskin.tool.view.gameplay" level="ERROR"/>
+    <logger name="com.osuskin.tool.service.AudioMixerService" level="ERROR"/>
     
-    <!-- Performance-related logging (set to DEBUG when optimizing) -->
-    <logger name="com.osuskin.tool.service.AsyncSkinLoader" level="INFO"/>
-    <logger name="com.osuskin.tool.service.PriorityLoader" level="INFO"/>
-    <logger name="com.osuskin.tool.service.SkinIndexCache" level="INFO"/>
+    <!-- Performance-critical components - show important events only -->
+    <logger name="com.osuskin.tool.service.AsyncPreviewLoader" level="WARN"/>
+    <logger name="com.osuskin.tool.service.AsyncSkinLoader" level="WARN"/>
+    <logger name="com.osuskin.tool.service.PriorityLoader" level="ERROR"/>
+    <logger name="com.osuskin.tool.service.SkinIndexCache" level="WARN"/>
+    
+    <!-- Startup/shutdown logging -->
+    <logger name="com.osuskin.tool.OsuSkinToolApplication" level="INFO"/>
+    
+    <!-- Performance monitoring - always show when enabled -->
+    <logger name="com.osuskin.tool.util.PerformanceMonitor" level="INFO"/>
     
     <!-- Root logger -->
     <root level="INFO">

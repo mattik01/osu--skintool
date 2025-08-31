@@ -1,248 +1,168 @@
 package com.osuskin.tool.service;
 
+import com.osuskin.tool.model.Skin;
 import com.osuskin.tool.model.SkinElementRegistry;
-import com.osuskin.tool.model.SkinElementRegistry.ElementDefinition;
+import com.osuskin.tool.util.PerformanceMonitor;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Service for loading skin elements with support for multiple file formats and animations.
- * Handles missing elements gracefully and provides fallback to defaults.
+ * Optimized skin element loader that uses manifest-based loading with zero file discovery.
+ * All element locations are predetermined in the manifest.
  */
 public class SkinElementLoader {
-    
     private static final Logger logger = LoggerFactory.getLogger(SkinElementLoader.class);
     
-    // Supported file extensions
-    private static final Set<String> IMAGE_EXTENSIONS = Set.of("png", "jpg", "jpeg");
-    private static final Set<String> AUDIO_EXTENSIONS = Set.of("wav", "ogg", "mp3");
-    
-    // Cache for loaded resources
-    private final Map<String, Image> imageCache = new HashMap<>();
-    private final Map<String, Media> audioCache = new HashMap<>();
-    private final Map<String, List<Image>> animationCache = new HashMap<>();
-    
+    // Current skin data
     private Path skinDirectory;
-    private Path defaultSkinDirectory;
-    private static final String DEFAULT_SKIN_RESOURCE_PATH = "/default-skin/";
-    private com.osuskin.tool.model.Skin currentSkin;
-    private SkinIndexCache.SkinIndex currentIndex;
+    private Skin currentSkin;
+    private SkinElementManifest manifest;
+    
+    // Loaded elements cache
+    private final Map<String, Image> loadedImages = new ConcurrentHashMap<>();
+    private final Map<String, Media> loadedAudio = new ConcurrentHashMap<>();
+    
+    // Default skin cache (singleton)
+    private final DefaultSkinCache defaultCache = DefaultSkinCache.getInstance();
+    
+    // Manifest rebuild state
+    private volatile boolean rebuildInProgress = false;
+    private long lastRebuildTime = 0;
+    private static final long REBUILD_COOLDOWN = 5000; // 5 seconds
+    private final AtomicInteger mismatchCount = new AtomicInteger(0);
+    private static final int MAX_MISMATCHES_BEFORE_REBUILD = 3;
     
     public SkinElementLoader(Path skinDirectory) {
-        this.skinDirectory = skinDirectory;
+        setSkinDirectory(skinDirectory);
     }
     
+    /**
+     * Set the skin directory and load/create manifest.
+     */
     public void setSkinDirectory(Path skinDirectory) {
         this.skinDirectory = skinDirectory;
-        this.currentSkin = null;  // Reset current skin
         clearCache();
+        mismatchCount.set(0);
         
-        // Load or create index for the new skin directory
         if (skinDirectory != null && Files.exists(skinDirectory)) {
-            SkinIndexCache indexCache = new SkinIndexCache();
-            SkinIndexCache.SkinIndexResult result = indexCache.loadOrCreateIndex(skinDirectory);
-            this.currentIndex = result.index;
+            loadOrCreateManifest();
         } else {
-            this.currentIndex = null;
+            this.manifest = null;
         }
     }
     
-    public void setCurrentSkin(com.osuskin.tool.model.Skin skin) {
-        this.currentSkin = skin;
-    }
-    
-    public com.osuskin.tool.model.Skin getCurrentSkin() {
-        return currentSkin;
-    }
-    
-    public void setDefaultSkinDirectory(Path defaultSkinDirectory) {
-        this.defaultSkinDirectory = defaultSkinDirectory;
-    }
-    
-    public void clearCache() {
-        imageCache.clear();
-        audioCache.clear();
-        animationCache.clear();
-    }
-    
     /**
-     * Invalidate the current index and trigger a rebuild.
-     * Called when a mismatch is detected.
+     * Load existing manifest or create new one.
      */
-    private void invalidateAndRebuildIndex() {
-        if (skinDirectory == null) return;
+    private void loadOrCreateManifest() {
+        PerformanceMonitor.startStep("Load/Create Manifest");
         
-        try {
-            // Invalidate the cached index
-            SkinIndexCache indexCache = new SkinIndexCache();
-            indexCache.invalidateIndex(skinDirectory);
+        // Try to load cached manifest
+        manifest = ManifestCache.loadManifest(skinDirectory);
+        
+        if (manifest == null || !manifest.isLikelyValid(skinDirectory)) {
+            // Build new manifest
+            logger.info("Building new manifest for: {}", skinDirectory);
+            manifest = SkinManifestBuilder.buildManifest(skinDirectory);
             
-            // Rebuild the index
-            SkinIndexCache.SkinIndexResult result = indexCache.loadOrCreateIndex(skinDirectory);
-            this.currentIndex = result.index;
-            
-            logger.info("Index rebuilt due to mismatch. New index has {} elements", 
-                currentIndex.availableElements.size());
-        } catch (Exception e) {
-            logger.error("Failed to rebuild index after mismatch", e);
+            if (manifest != null) {
+                // Cache the manifest
+                ManifestCache.saveManifest(skinDirectory, manifest);
+            }
+        } else {
+            logger.debug("Using cached manifest for: {}", skinDirectory);
+        }
+        
+        PerformanceMonitor.endStep("Load/Create Manifest");
+        
+        if (manifest != null) {
+            logger.info("Manifest loaded: {} elements, {} animations", 
+                manifest.getTotalElementCount(), 
+                manifest.getAnimationFrames("") != null ? manifest.getAnimationFrames("").size() : 0);
         }
     }
     
     /**
-     * Check if an element exists in the current skin using the index.
-     * Falls back to filesystem check if index is not available.
-     * Detects mismatches and triggers index rebuild if needed.
-     */
-    public boolean elementExists(String elementName) {
-        if (currentIndex != null && !currentIndex.availableElements.isEmpty()) {
-            // Use index for O(1) lookup
-            boolean indexSays = currentIndex.availableElements.contains(elementName) ||
-                               currentIndex.availableElements.contains(elementName + "@2x");
-            
-            // Periodically verify index accuracy (only for elements that index says exist)
-            // This catches deleted files
-            if (indexSays && Math.random() < 0.1) { // Check 10% of lookups
-                boolean actuallyExists = checkFileSystem(elementName);
-                if (!actuallyExists) {
-                    logger.warn("Index mismatch detected! {} was in index but not on disk. Triggering rebuild.", elementName);
-                    invalidateAndRebuildIndex();
-                    return false;
-                }
-            }
-            
-            return indexSays;
-        }
-        
-        // Fallback to filesystem check
-        return checkFileSystem(elementName);
-    }
-    
-    /**
-     * Get the frame count for an animation element from the index.
-     */
-    public int getAnimationFrameCount(String baseName) {
-        if (currentIndex != null) {
-            return currentIndex.animationFrameCounts.getOrDefault(baseName, 0);
-        }
-        return 0;
-    }
-    
-    /**
-     * Fallback method to check if element exists in filesystem.
-     */
-    private boolean checkFileSystem(String elementName) {
-        if (skinDirectory == null) return false;
-        
-        // Check for standard version
-        for (String ext : IMAGE_EXTENSIONS) {
-            if (Files.exists(skinDirectory.resolve(elementName + "." + ext))) {
-                return true;
-            }
-            // Check HD version
-            if (Files.exists(skinDirectory.resolve(elementName + "@2x." + ext))) {
-                return true;
-            }
-        }
-        
-        // Check for audio files
-        for (String ext : AUDIO_EXTENSIONS) {
-            if (Files.exists(skinDirectory.resolve(elementName + "." + ext))) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Load an image element, trying different extensions.
-     * Prefers standard versions over @2x HD versions.
-     * Falls back to default skin if not found.
+     * Load an image element using manifest-based loading.
+     * NO file discovery - only loads from manifest or falls back to default.
      */
     public Image loadImage(String elementName) {
-        if (imageCache.containsKey(elementName)) {
-            return imageCache.get(elementName);
+        if (elementName == null) return null;
+        
+        // Check cache first
+        if (loadedImages.containsKey(elementName)) {
+            return loadedImages.get(elementName);
         }
         
-        Image image = null;
-        
-        // Check if index says element doesn't exist
-        boolean indexSaysNoExist = currentIndex != null && 
-            !currentIndex.availableElements.contains(elementName) &&
-            !currentIndex.availableElements.contains(elementName + "@2x");
-        
-        // Try standard version first (preferred)
-        image = tryLoadImage(elementName);
-        
-        // Try HD version if standard not found (@2x)
-        if (image == null) {
-            image = tryLoadImage(elementName + "@2x");
+        // Check manifest
+        if (manifest != null) {
+            String elementLower = elementName.toLowerCase();
+            
+            // Check if this element needs fallback
+            if (manifest.needsFallback(elementLower)) {
+                // Element was marked as missing, use default immediately
+                Image defaultImage = defaultCache.getImage(elementName);
+                if (defaultImage != null) {
+                    loadedImages.put(elementName, defaultImage);
+                }
+                return defaultImage;
+            }
+            
+            // Try to load from exact path
+            String exactPath = manifest.getExactPath(elementLower);
+            if (exactPath != null) {
+                Image image = loadImageFromPath(exactPath, elementName);
+                if (image != null) {
+                    loadedImages.put(elementName, image);
+                    return image;
+                }
+            }
         }
         
-        // If we found an image that index said didn't exist, rebuild index
-        if (image != null && indexSaysNoExist) {
-            logger.warn("Index mismatch detected! {} was loaded but wasn't in index. Triggering rebuild.", elementName);
-            invalidateAndRebuildIndex();
+        // Fallback to default if not in manifest at all
+        Image defaultImage = defaultCache.getImage(elementName);
+        if (defaultImage != null) {
+            loadedImages.put(elementName, defaultImage);
         }
-        
-        // Try default skin from file system if configured
-        if (image == null && defaultSkinDirectory != null) {
-            image = tryLoadImageFromDirectory(defaultSkinDirectory, elementName);
-        }
-        
-        // Try default skin from resources (bundled with application)
-        if (image == null) {
-            image = tryLoadImageFromResources(elementName);
-        }
-        
-        if (image != null) {
-            imageCache.put(elementName, image);
-        } else {
-            logger.debug("Could not load image element: {}", elementName);
-        }
-        
-        return image;
+        return defaultImage;
     }
     
     /**
-     * Load an image element without falling back to default skin.
-     * Only loads from the current skin directory.
+     * Load image without fallback to default.
      */
     public Image loadImageNoFallback(String elementName) {
-        if (imageCache.containsKey(elementName + "_nofallback")) {
-            return imageCache.get(elementName + "_nofallback");
+        if (elementName == null) return null;
+        
+        // Check cache first
+        if (loadedImages.containsKey(elementName)) {
+            return loadedImages.get(elementName);
         }
         
-        Image image = null;
-        
-        // Try standard version first (preferred)
-        image = tryLoadImage(elementName);
-        
-        // Try HD version if standard not found (@2x)
-        if (image == null) {
-            image = tryLoadImage(elementName + "@2x");
+        // Check manifest only
+        if (manifest != null && manifest.containsElement(elementName.toLowerCase())) {
+            String exactPath = manifest.getExactPath(elementName.toLowerCase());
+            Image image = loadImageFromPath(exactPath, elementName);
+            if (image != null) {
+                loadedImages.put(elementName, image);
+            }
+            return image;
         }
         
-        // Don't fall back to default skin
-        
-        if (image != null) {
-            imageCache.put(elementName + "_nofallback", image);
-        }
-        
-        return image;
+        return null; // No fallback
     }
     
     /**
-     * Load image with custom prefix support for fonts.
+     * Load image with prefix support.
      */
     public Image loadImageWithPrefix(String prefix, String suffix) {
         if (prefix == null || suffix == null) return null;
@@ -260,336 +180,341 @@ public class SkinElementLoader {
     }
     
     /**
-     * Load an animated element, returning all frames in sequence.
+     * Load animation frames from manifest.
+     * IMPORTANT: Use whatever the skin provides - even if it's just 1 frame.
      */
-    public List<Image> loadAnimation(String elementName) {
-        if (animationCache.containsKey(elementName)) {
-            return animationCache.get(elementName);
+    public List<Image> loadAnimation(String baseName) {
+        if (manifest == null) {
+            // No manifest, try single image
+            Image single = loadImage(baseName);
+            return single != null ? List.of(single) : Collections.emptyList();
         }
         
-        List<Image> frames = new ArrayList<>();
-        
-        // First try to load base image (frame 0 or no suffix)
-        Image baseImage = loadImage(elementName);
-        if (baseImage != null) {
-            frames.add(baseImage);
-        }
-        
-        // Try to load numbered frames with different naming conventions
-        int frameIndex = 0;
-        while (true) {
-            Image frame = null;
-            
-            // Try different naming patterns
-            // Pattern 1: elementName-0, elementName-1, etc. (standard)
-            String frameName = elementName + "-" + frameIndex;
-            frame = tryLoadImage(frameName);
-            
-            // Pattern 2: elementName0, elementName1, etc. (no hyphen)
-            if (frame == null) {
-                frameName = elementName + frameIndex;
-                frame = tryLoadImage(frameName);
-            }
-            
-            // Also try @2x versions if standard not found
-            if (frame == null) {
-                frame = tryLoadImage(elementName + "-" + frameIndex + "@2x");
-            }
-            if (frame == null) {
-                frame = tryLoadImage(elementName + frameIndex + "@2x");
-            }
-            
-            // Try loading from resources if not found in skin
-            if (frame == null) {
-                frame = tryLoadImageFromResources(elementName + frameIndex);
-            }
-            
-            if (frame != null) {
-                if (frameIndex == 0 && !frames.isEmpty()) {
-                    // Replace base image with frame 0 if it exists
-                    frames.set(0, frame);
-                } else {
-                    frames.add(frame);
+        // Check if this has animation frames in manifest
+        if (manifest.isAnimated(baseName)) {
+            List<String> framePaths = manifest.getAnimationFrames(baseName);
+            if (framePaths != null && !framePaths.isEmpty()) {
+                List<Image> frames = new ArrayList<>();
+                for (String framePath : framePaths) {
+                    Image frame = loadImageFromPath(framePath, baseName + "-frame");
+                    if (frame != null) {
+                        frames.add(frame);
+                    }
                 }
-                frameIndex++;
-            } else if (frameIndex > 0) {
-                // Stop when we can't find the next frame
-                break;
-            } else {
-                // No frame 0, move to frame 1
-                frameIndex = 1;
-            }
-            
-            // Prevent infinite loops
-            if (frameIndex > 100) {
-                logger.warn("Too many animation frames for element: {}", elementName);
-                break;
+                // Return whatever we got - even if it's just 1 frame
+                if (!frames.isEmpty()) {
+                    return frames;
+                }
             }
         }
         
-        if (!frames.isEmpty()) {
-            animationCache.put(elementName, frames);
-            logger.debug("Loaded {} animation frames for element: {}", frames.size(), elementName);
+        // Not animated or loading failed, try single image
+        Image single = loadImage(baseName);
+        if (single != null) {
+            return List.of(single);
         }
         
-        return frames;
+        // Check for base frame with -0 suffix (some skins use this)
+        Image frame0 = loadImage(baseName + "-0");
+        if (frame0 != null) {
+            return List.of(frame0);
+        }
+        
+        return Collections.emptyList();
     }
     
     /**
-     * Load an audio element, trying different extensions.
+     * Check if element exists in manifest.
+     */
+    public boolean elementExists(String elementName) {
+        if (manifest != null) {
+            return manifest.containsElement(elementName.toLowerCase());
+        }
+        return defaultCache.hasElement(elementName);
+    }
+    
+    /**
+     * Load all critical elements in parallel for fast preview startup.
+     */
+    public CompletableFuture<Void> preloadCriticalElements() {
+        if (manifest == null) {
+            return CompletableFuture.completedFuture(null);
+        }
+        
+        Set<String> criticalElements = manifest.getCriticalElements();
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        
+        for (String elementName : criticalElements) {
+            futures.add(CompletableFuture.runAsync(() -> {
+                loadImage(elementName); // This caches the image
+            }));
+        }
+        
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+    }
+    
+    /**
+     * Load image from exact path with mismatch detection.
+     */
+    private Image loadImageFromPath(String pathUri, String elementName) {
+        try {
+            // Load with background loading, no size constraints
+            Image image = new Image(pathUri, true); // backgroundLoading only
+            
+            // Wait for background load to complete (with timeout)
+            int waitCount = 0;
+            while (image.getProgress() < 1.0 && !image.isError() && waitCount < 100) {
+                Thread.sleep(10);
+                waitCount++;
+            }
+            
+            if (image.isError()) {
+                handleManifestMismatch(elementName, pathUri, image.getException());
+                return null;
+            }
+            
+            return image;
+            
+        } catch (Exception e) {
+            handleManifestMismatch(elementName, pathUri, e);
+            return null;
+        }
+    }
+    
+    /**
+     * Handle manifest mismatch when expected file is not found.
+     */
+    private void handleManifestMismatch(String elementName, String expectedPath, Exception error) {
+        logger.warn("Manifest mismatch for '{}' at path '{}': {}", 
+            elementName, expectedPath, error != null ? error.getMessage() : "unknown error");
+        
+        int mismatches = mismatchCount.incrementAndGet();
+        
+        // Trigger rebuild if threshold reached
+        if (mismatches >= MAX_MISMATCHES_BEFORE_REBUILD && shouldTriggerRebuild()) {
+            triggerManifestRebuild();
+        }
+    }
+    
+    /**
+     * Check if we should trigger a rebuild.
+     */
+    private boolean shouldTriggerRebuild() {
+        if (rebuildInProgress) return false;
+        if (System.currentTimeMillis() - lastRebuildTime < REBUILD_COOLDOWN) return false;
+        return true;
+    }
+    
+    /**
+     * Trigger asynchronous manifest rebuild.
+     */
+    private void triggerManifestRebuild() {
+        if (rebuildInProgress || skinDirectory == null) return;
+        
+        rebuildInProgress = true;
+        lastRebuildTime = System.currentTimeMillis();
+        
+        logger.info("Triggering manifest rebuild for: {}", skinDirectory);
+        
+        CompletableFuture.runAsync(() -> {
+            try {
+                // Build new manifest
+                SkinElementManifest newManifest = SkinManifestBuilder.buildManifest(skinDirectory);
+                
+                if (newManifest != null) {
+                    // Replace current manifest
+                    this.manifest = newManifest;
+                    
+                    // Save to cache
+                    ManifestCache.saveManifest(skinDirectory, newManifest);
+                    
+                    // Reset mismatch count
+                    mismatchCount.set(0);
+                    
+                    logger.info("Manifest rebuilt successfully");
+                }
+            } catch (Exception e) {
+                logger.error("Failed to rebuild manifest", e);
+            } finally {
+                rebuildInProgress = false;
+            }
+        });
+    }
+    
+    /**
+     * Load audio element.
      */
     public Media loadAudio(String elementName) {
-        if (audioCache.containsKey(elementName)) {
-            return audioCache.get(elementName);
+        if (elementName == null) return null;
+        
+        // Check cache first
+        if (loadedAudio.containsKey(elementName)) {
+            return loadedAudio.get(elementName);
         }
         
-        Media audio = tryLoadAudio(elementName);
-        
-        // Try default skin from file system if configured
-        if (audio == null && defaultSkinDirectory != null) {
-            audio = tryLoadAudioFromDirectory(defaultSkinDirectory, elementName);
+        // Check manifest
+        if (manifest != null && manifest.containsElement(elementName.toLowerCase())) {
+            String exactPath = manifest.getExactPath(elementName.toLowerCase());
+            try {
+                Media media = new Media(exactPath);
+                if (media.getError() == null) {
+                    loadedAudio.put(elementName, media);
+                    return media;
+                }
+            } catch (Exception e) {
+                logger.debug("Failed to load audio: {}", elementName, e);
+            }
         }
         
-        // Try default skin from resources (bundled with application)
-        if (audio == null) {
-            audio = tryLoadAudioFromResources(elementName);
+        // Fallback to default
+        Media defaultAudio = defaultCache.getAudio(elementName);
+        if (defaultAudio != null) {
+            loadedAudio.put(elementName, defaultAudio);
         }
-        
-        if (audio != null) {
-            audioCache.put(elementName, audio);
-        } else {
-            logger.debug("Could not load audio element: {}", elementName);
-        }
-        
-        return audio;
+        return defaultAudio;
     }
     
     /**
-     * Load multiple audio elements and return them as a list.
-     * Useful for loading sets of hitsounds.
+     * Clear all caches.
+     */
+    public void clearCache() {
+        loadedImages.clear();
+        loadedAudio.clear();
+    }
+    
+    /**
+     * Set current skin metadata.
+     */
+    public void setCurrentSkin(Skin skin) {
+        this.currentSkin = skin;
+    }
+    
+    public Skin getCurrentSkin() {
+        return currentSkin;
+    }
+    
+    /**
+     * Get statistics about the loader.
+     */
+    public String getStats() {
+        return String.format("OptimizedLoader[manifest=%s, images=%d, audio=%d, mismatches=%d]",
+            manifest != null ? manifest.getTotalElementCount() : 0,
+            loadedImages.size(),
+            loadedAudio.size(),
+            mismatchCount.get());
+    }
+    
+    /**
+     * Set preloaded elements from AsyncPreviewLoader.
+     * These are the preview elements loaded in the background.
+     */
+    public void setPreloadedElements(Map<String, Image> elements) {
+        if (elements != null) {
+            loadedImages.putAll(elements);
+        }
+    }
+    
+    /**
+     * Get the frame count for an animation element.
+     */
+    public int getAnimationFrameCount(String baseName) {
+        if (manifest != null) {
+            List<String> frames = manifest.getAnimationFrames(baseName);
+            return frames != null ? frames.size() : 0;
+        }
+        return 0;
+    }
+    
+    /**
+     * Load multiple audio files as a set.
      */
     public List<Media> loadAudioSet(String... elementNames) {
-        List<Media> audioList = new ArrayList<>();
-        
-        for (String elementName : elementNames) {
-            Media audio = loadAudio(elementName);
+        List<Media> audioSet = new ArrayList<>();
+        for (String name : elementNames) {
+            Media audio = loadAudio(name);
             if (audio != null) {
-                audioList.add(audio);
+                audioSet.add(audio);
             }
         }
-        
-        return audioList;
+        return audioSet;
     }
     
+    /**
+     * Set default skin directory (legacy compatibility).
+     */
+    public void setDefaultSkinDirectory(Path defaultSkinDirectory) {
+        // Not needed with DefaultSkinCache singleton
+        logger.debug("setDefaultSkinDirectory called but ignored - using DefaultSkinCache");
+    }
     
     /**
-     * Get a list of all elements present in the skin, categorized.
+     * Get categorized elements for the skin.
      */
-    public Map<SkinElementRegistry.ElementCategory, List<String>> getCategorizedElements() {
-        Map<SkinElementRegistry.ElementCategory, List<String>> categorized = new HashMap<>();
+    public Map<com.osuskin.tool.model.SkinElementRegistry.ElementCategory, List<String>> getCategorizedElements() {
+        Map<com.osuskin.tool.model.SkinElementRegistry.ElementCategory, List<String>> categorized = new HashMap<>();
         
-        try {
-            List<Path> allFiles = Files.list(skinDirectory)
-                .filter(Files::isRegularFile)
-                .collect(Collectors.toList());
+        if (manifest != null) {
+            // Get all elements from manifest
+            Set<String> allElements = new HashSet<>();
+            allElements.addAll(manifest.getCriticalElements());
+            allElements.addAll(manifest.getSecondaryElements());
             
-            for (Path file : allFiles) {
-                String fileName = file.getFileName().toString();
-                ElementDefinition def = SkinElementRegistry.getDefinition(fileName);
-                
-                if (def != null) {
-                    categorized.computeIfAbsent(def.getCategory(), k -> new ArrayList<>())
-                        .add(fileName);
+            for (String element : allElements) {
+                com.osuskin.tool.model.SkinElementRegistry.ElementDefinition def = 
+                    com.osuskin.tool.model.SkinElementRegistry.getDefinition(element);
+                if (def != null && def.getCategory() != null) {
+                    categorized.computeIfAbsent(def.getCategory(), k -> new ArrayList<>()).add(element);
                 }
             }
-        } catch (Exception e) {
-            logger.error("Error categorizing skin elements", e);
         }
         
         return categorized;
     }
     
-    // Private helper methods
-    
-    private Image tryLoadImage(String elementName) {
-        return tryLoadImageFromDirectory(skinDirectory, elementName);
-    }
-    
-    private Image tryLoadImageFromDirectory(Path directory, String elementName) {
-        // Try each image extension with both exact case and case-insensitive search
-        for (String ext : IMAGE_EXTENSIONS) {
-            // First try exact case
-            Path imagePath = directory.resolve(elementName + "." + ext);
-            if (Files.exists(imagePath)) {
-                try {
-                    logger.debug("Found image file: {} with extension: {}", elementName, ext);
-                    Image image = new Image(imagePath.toUri().toString());
-                    // Verify the image loaded correctly
-                    if (!image.isError()) {
-                        return image;
-                    } else {
-                        logger.warn("Image error for {}: {}", imagePath, image.getException());
-                    }
-                } catch (Exception e) {
-                    logger.error("Error loading image: {}", imagePath, e);
-                }
-            }
-            
-            // Try case-insensitive search if exact match fails
-            Path foundPath = findFileIgnoreCase(directory, elementName + "." + ext);
-            if (foundPath != null) {
-                try {
-                    logger.debug("Found image file (case-insensitive): {}", foundPath.getFileName());
-                    Image image = new Image(foundPath.toUri().toString());
-                    if (!image.isError()) {
-                        return image;
-                    }
-                } catch (Exception e) {
-                    logger.error("Error loading image: {}", foundPath, e);
-                }
-            }
-        }
-        
-        // Log which formats were checked for debugging
-        logger.debug("Image not found for '{}' in directory: {}. Checked extensions: {}", 
-                    elementName, directory, IMAGE_EXTENSIONS);
-        return null;
-    }
-    
-    private Media tryLoadAudio(String elementName) {
-        return tryLoadAudioFromDirectory(skinDirectory, elementName);
-    }
-    
-    private Media tryLoadAudioFromDirectory(Path directory, String elementName) {
-        // Try each audio extension with both exact case and case-insensitive search
-        for (String ext : AUDIO_EXTENSIONS) {
-            // First try exact case
-            Path audioPath = directory.resolve(elementName + "." + ext);
-            if (Files.exists(audioPath)) {
-                try {
-                    logger.debug("Found audio file: {} with extension: {}", elementName, ext);
-                    Media media = new Media(audioPath.toUri().toString());
-                    // Verify the media loaded correctly
-                    if (media.getError() == null) {
-                        return media;
-                    } else {
-                        logger.warn("Media error for {}: {}", audioPath, media.getError());
-                    }
-                } catch (Exception e) {
-                    logger.error("Error loading audio: {}", audioPath, e);
-                }
-            }
-            
-            // Try case-insensitive search if exact match fails
-            Path foundPath = findFileIgnoreCase(directory, elementName + "." + ext);
-            if (foundPath != null) {
-                try {
-                    logger.debug("Found audio file (case-insensitive): {}", foundPath.getFileName());
-                    Media media = new Media(foundPath.toUri().toString());
-                    if (media.getError() == null) {
-                        return media;
-                    }
-                } catch (Exception e) {
-                    logger.error("Error loading audio: {}", foundPath, e);
-                }
-            }
-        }
-        
-        // Log which formats were checked
-        logger.debug("Audio not found for '{}' in directory: {}. Checked extensions: {}", 
-                    elementName, directory, AUDIO_EXTENSIONS);
-        return null;
-    }
-    
     /**
-     * Try to load an image from bundled resources (default skin).
-     */
-    private Image tryLoadImageFromResources(String elementName) {
-        for (String ext : IMAGE_EXTENSIONS) {
-            String resourcePath = DEFAULT_SKIN_RESOURCE_PATH + elementName + "." + ext;
-            try {
-                URL resource = getClass().getResource(resourcePath);
-                if (resource != null) {
-                    return new Image(resource.toExternalForm());
-                }
-            } catch (Exception e) {
-                // Try next extension
-            }
-        }
-        return null;
-    }
-    
-    /**
-     * Try to load audio from bundled resources (default skin).
-     */
-    private Media tryLoadAudioFromResources(String elementName) {
-        for (String ext : AUDIO_EXTENSIONS) {
-            String resourcePath = DEFAULT_SKIN_RESOURCE_PATH + elementName + "." + ext;
-            try {
-                URL resource = getClass().getResource(resourcePath);
-                if (resource != null) {
-                    return new Media(resource.toExternalForm());
-                }
-            } catch (Exception e) {
-                // Try next extension
-            }
-        }
-        return null;
-    }
-    
-    /**
-     * Get statistics about element coverage in the skin.
+     * Get element statistics.
      */
     public SkinElementStats getElementStats() {
         SkinElementStats stats = new SkinElementStats();
         
-        // Count required elements
-        for (ElementDefinition def : SkinElementRegistry.getRequiredElements()) {
-            if (elementExists(def.getBaseName())) {
-                stats.presentRequiredElements++;
+        if (manifest != null) {
+            // Count elements by category
+            Map<com.osuskin.tool.model.SkinElementRegistry.ElementCategory, List<String>> categorized = getCategorizedElements();
+            for (Map.Entry<com.osuskin.tool.model.SkinElementRegistry.ElementCategory, List<String>> entry : categorized.entrySet()) {
+                stats.elementsByCategory.put(entry.getKey(), entry.getValue().size());
             }
-            stats.totalRequiredElements++;
-        }
-        
-        // Count by category
-        Map<SkinElementRegistry.ElementCategory, List<String>> categorized = getCategorizedElements();
-        for (Map.Entry<SkinElementRegistry.ElementCategory, List<String>> entry : categorized.entrySet()) {
-            stats.elementsByCategory.put(entry.getKey(), entry.getValue().size());
+            
+            // Count required elements
+            Set<String> allElements = new HashSet<>();
+            allElements.addAll(manifest.getCriticalElements());
+            allElements.addAll(manifest.getSecondaryElements());
+            
+            for (String element : allElements) {
+                com.osuskin.tool.model.SkinElementRegistry.ElementDefinition def = 
+                    com.osuskin.tool.model.SkinElementRegistry.getDefinition(element);
+                if (def != null && def.isRequired()) {
+                    stats.presentRequiredElements++;
+                }
+            }
+            
+            // Get total required from registry
+            stats.totalRequiredElements = com.osuskin.tool.model.SkinElementRegistry.getRequiredElements().size();
         }
         
         return stats;
     }
     
     /**
-     * Find a file in a directory with case-insensitive matching.
-     * Returns the actual path if found, null otherwise.
+     * Statistics class for element counts.
      */
-    private Path findFileIgnoreCase(Path directory, String fileName) {
-        if (!Files.exists(directory) || !Files.isDirectory(directory)) {
-            return null;
-        }
-        
-        String lowerFileName = fileName.toLowerCase();
-        try {
-            return Files.list(directory)
-                .filter(Files::isRegularFile)
-                .filter(path -> path.getFileName().toString().toLowerCase().equals(lowerFileName))
-                .findFirst()
-                .orElse(null);
-        } catch (IOException e) {
-            logger.debug("Error searching for file case-insensitive: {}", fileName, e);
-            return null;
-        }
-    }
-    
     public static class SkinElementStats {
         public int totalRequiredElements = 0;
         public int presentRequiredElements = 0;
-        public Map<SkinElementRegistry.ElementCategory, Integer> elementsByCategory = new HashMap<>();
+        public Map<com.osuskin.tool.model.SkinElementRegistry.ElementCategory, Integer> elementsByCategory = new HashMap<>();
         
         public double getRequiredElementCoverage() {
             if (totalRequiredElements == 0) return 0;
-            return (double) presentRequiredElements / totalRequiredElements * 100;
+            return (double) presentRequiredElements / totalRequiredElements;
         }
     }
 }

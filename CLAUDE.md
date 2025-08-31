@@ -1,69 +1,48 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this repository.
 
 ## Project Overview
 
-A JavaFX desktop application for managing and previewing osu! skins. Built with Java 17, JavaFX 19, and Maven for cross-platform skin management with features like smart path detection, metadata extraction, and preview functionality.
+A high-performance JavaFX application for managing and previewing osu! skins with real-time gameplay simulation and advanced caching.
 
 ## Development Commands
 
-### Core Build Commands
+### Build & Run
 - **Compile**: `mvn clean compile`
-- **Run Application**: `mvn javafx:run`
+- **Run**: `mvn javafx:run`
+- **Package JAR**: `mvn clean package`
 - **Run Tests**: `mvn test`
-- **Build JAR**: `mvn clean package` (creates shaded JAR in target/)
-- **Native Package**: `mvn clean package -P jpackage` (Windows installer)
 
-### Testing Commands
-- **All Tests**: `mvn test`
-- **Single Test Class**: `mvn test -Dtest=ClassName`
-- **TestFX GUI Tests**: `mvn test -Dtest=*Test` (uses TestFX framework)
+## Architecture
 
-## Architecture Overview
+### Active Services
+- **LazyLoadingSkinService**: Primary skin loading with lazy initialization
+- **SkinContainerService**: Manages skin containers and extraction
+- **AsyncPreviewLoader**: Asynchronous preview loading with thread pool (4 threads default)
+- **AudioMixerService**: Audio preview and hitsound playback
+- **ManifestCache**: Caches skin element manifests
+- **DefaultSkinCache**: Singleton cache for default skin elements
+- **SkinElementLoader**: Loads individual elements with fallback
+- **PerformanceMonitor**: Tracks performance metrics
 
-### Core Design Patterns
-- **MVC Architecture**: Clear separation with controllers, models, and FXML views
-- **Service Layer**: Business logic isolated in service classes
-- **Dependency Injection**: Manual DI through constructor injection and setters
-- **Configuration Management**: JSON-based persistence with Jackson
-- **Asynchronous Operations**: JavaFX Tasks for non-blocking UI operations
+### Core Models
+- **Skin**: Domain model with metadata and element management
+- **SkinContainer**: Manages extracted skin containers
+- **SkinElement**: Individual skin file representation
+- **Configuration**: Application settings persistence
+- **PreviewElements**: Elements needed for preview
+- **ElementGroup**: Priority-based element grouping
 
-### Key Components
+### Controller
+- **MainController**: Single UI controller with embedded preview
 
-**Models** (`com.osuskin.tool.model`):
-- `Skin`: Rich domain model with element management, metadata, and JSON serialization
-- `SkinElement`: Represents individual skin files with type classification
-- `SkinElementRegistry`: Comprehensive catalog of all osu! skin elements with categories
-- `Configuration`: Application settings and user preferences
-
-**Services** (`com.osuskin.tool.service`):
-- `SkinScannerService`: Directory scanning with async Task support and metadata extraction
-- `SkinElementLoader`: Flexible element loading with fallback to default skin
-- `ConfigurationService`: Settings management and persistence
-
-**Controllers** (`com.osuskin.tool.controller`):
-- `MainController`: Primary UI controller with embedded preview functionality
-- `SkinPreviewController`: Standalone preview window controller (deprecated)
-
-**View Components** (`com.osuskin.tool.view`):
-- `SimpleGameplayRenderer`: Basic animated skin preview renderer
-- `GameplayRenderer`: Enhanced renderer with full gameplay simulation
-- `gameplay/HitObject`: Base class for preview hit objects
-- `gameplay/HitCircle`: Circle implementation with timing
-- `gameplay/Slider`: Slider implementation with ball animation
-- `gameplay/HitBurst`: Hit burst animation manager
-- `gameplay/GameplayUI`: UI overlay system (health, score, combo)
-
-**Utilities** (`com.osuskin.tool.util`):
-- `ConfigurationManager`: JSON config file I/O with Jackson
-- `OsuPathDetector`: Cross-platform osu! installation detection
-
-### Data Flow Architecture
-1. **Initialization**: ConfigurationManager loads settings → OsuPathDetector finds default paths
-2. **Scanning**: SkinScannerService.createScanTask() → Async directory traversal → Skin model population
-3. **UI Updates**: Controller receives Task updates → Updates JavaFX components
-4. **Persistence**: Configuration changes → ConfigurationManager.saveConfiguration()
+### View Components
+- **GameplayRenderer**: Full gameplay preview with animations
+- **SimpleGameplayRenderer**: Legacy basic renderer
+- **GameplayUI**: Overlay UI (health, score, combo)
+- **HitCircle/Slider**: Hit object implementations
+- **SharedElementCache**: Shared cache for gameplay elements
 
 ## Technology Stack
 
@@ -131,11 +110,6 @@ src/main/resources/
 - Automatic file-to-type mapping via filename patterns
 - Support for images (.png, .jpg) and audio (.wav, .mp3, .ogg)
 
-### Compressed File Extraction
-- **Nested Folder Detection**: Analyzes ZIP structure to identify single root folders
-- **Smart Stripping**: Removes container folders when >80% of skin files are nested
-- **Skin File Recognition**: Detects skin.ini, hitcircle, cursor, slider elements
-- **Structure Preservation**: Maintains subdirectories while flattening unnecessary nesting
 
 ## Development Guidelines
 
@@ -152,11 +126,10 @@ src/main/resources/
 - Graceful degradation for missing skin elements
 - User-friendly error dialogs in JavaFX controllers
 
-### Testing Strategy
-- TestFX for GUI testing (configured in pom.xml)
+### Testing
 - JUnit 5 for unit tests
+- TestFX for GUI testing (if needed)
 - Mock skin directories for testing
-- No current test files exist - create as needed
 
 ## Platform-Specific Notes
 
@@ -165,38 +138,6 @@ src/main/resources/
 - **macOS**: `~/Library/Application Support/osu!/Skins/`  
 - **Linux**: `~/.local/share/osu!/Skins/`
 
-### JavaFX Packaging
-- Fat JAR includes all dependencies via Maven Shade plugin
-- JPackage profile for native installers (Windows tested)
-- Cross-platform compatibility verified
-
-## Current Implementation Status
-
-### ✅ Completed Features
-- **Core Application Structure**: JavaFX setup, Maven configuration, cross-platform support
-- **Configuration System**: JSON persistence, auto-save, platform-specific paths
-- **Directory Management**: Smart osu! path detection, directory validation
-- **Skin Scanning**: Metadata extraction, element counting, skin.ini parsing, combo color parsing
-- **Compressed File Support**: ZIP/OSK extraction with nested folder handling
-- **UI Implementation**: Clean interface with simplified controls
-- **Embedded Preview System**:
-  - Audio preview with volume control
-  - Hitsounds and misc sounds playback
-  - Visual animation with actual skin elements
-  - Automatic continuous playback
-  - Proper element scaling and layering
-- **Default Skin Fallback**: Resources folder with default elements
-- **Enhanced Gameplay Preview**:
-  - Hit burst animations (50/100/300/miss) with sprite support
-  - Dynamic lighting effects on hits
-  - Full slider implementation with ball animation and reverse arrows
-  - Smooth cursor movement with trail effects
-  - Health bar with danger indicators
-  - Score and combo counters with skin fonts
-  - Combo color system from skin.ini
-  - Varied hit results for realistic gameplay
-  - Proper hit object timeline with overlap
-  - Consistent scaling system for all elements
 
 ## Performance Optimization Guidelines
 
@@ -210,7 +151,7 @@ src/main/resources/
 ### Critical Performance Areas
 
 #### 1. Skin Loading
-- Use `AsyncSkinLoader` for all skin loading operations
+- Use `AsyncPreviewLoader` for all skin loading operations
 - Implement `SkinElementManifest` to track available elements
 - Never perform I/O operations on the UI thread
 - Clear previous preview immediately on skin change
@@ -256,8 +197,6 @@ src/main/resources/
 - ❌ Checking for non-existent files repeatedly
 
 ## Related Documentation
-- `PERFORMANCE_OPTIMIZATION.md` - Detailed performance optimization strategies
-- `PERFORMANCE_IMPLEMENTATION_PLAN.md` - Step-by-step implementation guide
-- `OSU_SKIN_RENDERING.md` - Comprehensive guide to osu! skin element rendering
+- `docs/ARCHITECTURE.md` - System architecture details
+- `docs/OSU_SKIN_RENDERING.md` - osu! skin element specifications
 - `src/main/resources/default-skin/README.md` - Default skin setup instructions
-- `src/main/resources/default-skin/REQUIRED_ELEMENTS.md` - Complete element list

@@ -7,13 +7,14 @@ import com.osuskin.tool.model.SkinContainer;
 import com.osuskin.tool.service.LazyLoadingSkinService;
 import com.osuskin.tool.service.SkinContainerService;
 import com.osuskin.tool.service.SkinElementLoader;
+import com.osuskin.tool.service.ManifestCache;
 import com.osuskin.tool.service.AudioMixerService;
-import com.osuskin.tool.service.AsyncSkinLoader;
-import com.osuskin.tool.service.PriorityLoader;
+import com.osuskin.tool.service.AsyncPreviewLoader;
 import com.osuskin.tool.view.SimpleGameplayRenderer;
 import com.osuskin.tool.view.gameplay.GameplayRenderer;
 import com.osuskin.tool.util.ConfigurationManager;
 import com.osuskin.tool.util.OsuPathDetector;
+import com.osuskin.tool.util.PerformanceMonitor;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -139,13 +140,11 @@ public class MainController implements Initializable {
     private List<MediaPlayer> hitsoundPlayers = new ArrayList<>();
     private AnimationTimer animationTimer;
     private AudioMixerService audioMixerService;
-    private AsyncSkinLoader asyncSkinLoader;
-    private PriorityLoader priorityLoader;
-    private Task<AsyncSkinLoader.SkinLoadResult> currentPreviewTask;
+    private AsyncPreviewLoader asyncPreviewLoader;
+    private Task<AsyncPreviewLoader.PreviewLoadResult> currentPreviewTask;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        logger.info("Initializing MainController");
         
         // Initialize collections
         allSkins = FXCollections.observableArrayList();
@@ -179,6 +178,13 @@ public class MainController implements Initializable {
         // Setup canvas resize listener
         setupCanvasResizeListener();
         
+        // Add proper selection change listener (only fires when selection actually changes)
+        listSkins.getSelectionModel().selectedItemProperty().addListener((observable, oldSkin, newSkin) -> {
+            if (newSkin != null && newSkin != oldSkin) {
+                onSkinSelectionChanged(newSkin);
+            }
+        });
+        
         // Initially hide preview controls
         hidePreviewControls();
         
@@ -195,20 +201,17 @@ public class MainController implements Initializable {
         audioMixerService = new AudioMixerService();
         setupAudioMixerControls();
         
-        // Initialize async loaders
-        asyncSkinLoader = new AsyncSkinLoader();
-        priorityLoader = new PriorityLoader();
+        // Initialize async preview loader
+        asyncPreviewLoader = new AsyncPreviewLoader();
         
         // Pre-initialize renderers at startup for performance
         preInitializeRenderers();
         
-        logger.info("MainController initialization completed");
     }
     
     public void setConfigurationManager(ConfigurationManager configurationManager) {
         this.configurationManager = configurationManager;
         this.lazyLoadingService = new LazyLoadingSkinService();
-        this.skinContainerService = new SkinContainerService();
         
         // Update UI based on configuration
         Configuration config = configurationManager.getConfiguration();
@@ -317,59 +320,35 @@ public class MainController implements Initializable {
     
     @FXML
     private void onRefreshSkins() {
+        // Clear all manifests when user manually refreshes
+        ManifestCache.clearAllCaches();
         startSkinScan();
     }
     
     
     
+    /**
+     * Handles skin selection changes properly (only when selection actually changes).
+     * This replaces the old onSkinSelected which fired on every click.
+     */
+    private void onSkinSelectionChanged(Skin selectedSkin) {
+        // Cancel any existing loading
+        if (currentPreviewTask != null && currentPreviewTask.isRunning()) {
+            currentPreviewTask.cancel();
+        }
+        if (lazyLoadingService != null) {
+            lazyLoadingService.cancelCurrentLoading();
+        }
+        
+        // Simply display the preview - no need for multiple loading tasks
+        displaySkinPreview(selectedSkin);
+        updateSelectionUI();
+    }
+    
     @FXML
     private void onSkinSelected(MouseEvent event) {
-        Skin selectedSkin = listSkins.getSelectionModel().getSelectedItem();
-        if (selectedSkin != null) {
-            // Run all loading operations asynchronously to avoid blocking UI
-            Platform.runLater(() -> {
-                // Cancel any existing loading
-                if (lazyLoadingService != null) {
-                    lazyLoadingService.cancelCurrentLoading();
-                }
-                
-                // Show loading indicator immediately
-                showLoadingIndicator();
-                
-                // Start lazy loading with progress - this runs in a separate thread
-                currentLoadingTask = lazyLoadingService.createProgressiveLoadTask(selectedSkin, () -> {
-                    // This callback is already wrapped in Platform.runLater by the service
-                    // Just update the preview
-                    displaySkinPreview(selectedSkin);
-                });
-                
-                // Bind progress indicators
-                if (previewProgressBar != null && currentLoadingTask != null) {
-                    previewProgressBar.progressProperty().bind(currentLoadingTask.progressProperty());
-                }
-                if (previewLoadingLabel != null && currentLoadingTask != null) {
-                    previewLoadingLabel.textProperty().bind(currentLoadingTask.messageProperty());
-                }
-                
-                // Handle task completion
-                currentLoadingTask.setOnSucceeded(e -> {
-                    hideLoadingIndicator();
-                    displaySkinPreview(selectedSkin);
-                    updateSelectionUI();
-                });
-                
-                currentLoadingTask.setOnCancelled(e -> {
-                    hideLoadingIndicator();
-                    logger.debug("Skin loading cancelled");
-                });
-                
-                currentLoadingTask.setOnFailed(e -> {
-                    hideLoadingIndicator();
-                    logger.error("Failed to load skin", currentLoadingTask.getException());
-                    showAlert("Error", "Failed to load skin: " + currentLoadingTask.getException().getMessage());
-                });
-            });
-        }
+        // This method is now deprecated - selection is handled by the listener in initialize()
+        // Kept for FXML compatibility but does nothing
     }
     
     @FXML
@@ -462,15 +441,39 @@ public class MainController implements Initializable {
         alert.showAndWait();
     }
     
+    
     @FXML
     private void onExit() {
-        // Clean up resources before exit
+        logger.info("Exit requested - cleaning up resources");
+        
+        // Stop any playing audio/animations
+        stopCurrentPreview();
+        
+        // Clean up audio mixer service
+        if (audioMixerService != null) {
+            audioMixerService.stop();
+        }
+        
+        // Cancel any preview loading tasks
+        if (currentPreviewTask != null && currentPreviewTask.isRunning()) {
+            currentPreviewTask.cancel();
+        }
+        
+        // Shutdown lazy loading service
         if (lazyLoadingService != null) {
             lazyLoadingService.shutdown();
         }
+        
+        // Cancel any other loading tasks
         if (currentLoadingTask != null && currentLoadingTask.isRunning()) {
             currentLoadingTask.cancel();
         }
+        
+        // Stop resize timer if running
+        if (resizeTimer != null) {
+            resizeTimer.stop();
+        }
+        
         Platform.exit();
     }
     
@@ -589,21 +592,10 @@ public class MainController implements Initializable {
     }
     
     private void setupAudioMixerControls() {
-        // Populate sample selector
+        // Sample selector not used in simplified version
         if (sampleSelector != null) {
-            updateSampleList();
-            sampleSelector.setOnAction(e -> {
-                String selected = sampleSelector.getValue();
-                if (selected != null) {
-                    logger.info("Sample selected: {}", selected);
-                    audioMixerService.loadSample(selected);
-                    // Reset play button
-                    if (btnPlayPause != null) {
-                        btnPlayPause.setText("▶");
-                    }
-                    // Auto-load the first sample but don't auto-play
-                }
-            });
+            sampleSelector.setVisible(false);
+            sampleSelector.setManaged(false);
         }
         
         // Setup audio volume slider (0-20% actual volume)
@@ -628,32 +620,45 @@ public class MainController implements Initializable {
     }
     
     private void updateSampleList() {
-        if (sampleSelector != null) {
-            List<AudioMixerService.BeatmapSample> samples = audioMixerService.getAvailableSamples();
-            ObservableList<String> sampleNames = FXCollections.observableArrayList();
-            for (AudioMixerService.BeatmapSample sample : samples) {
-                sampleNames.add(sample.name);
-            }
-            sampleSelector.setItems(sampleNames);
-            if (!sampleNames.isEmpty()) {
-                String firstSample = sampleNames.get(0);
-                sampleSelector.setValue(firstSample);
-                // Auto-load the first sample
-                audioMixerService.loadSample(firstSample);
-                // Reset play button
-                if (btnPlayPause != null) {
-                    btnPlayPause.setText("▶");
-                }
-            }
-        }
+        // Not used in simplified version
     }
     
     @FXML
     private void onTogglePlayPause() {
         logger.info("Play button clicked");
-        // Play once only, no looping
-        audioMixerService.setLooping(false);
-        audioMixerService.play();
+        
+        // If already playing, just toggle
+        if (audioMixerService.isPlaying()) {
+            audioMixerService.togglePlayPause();
+            if (btnPlayPause != null) {
+                btnPlayPause.setText("▶");
+            }
+            return;
+        }
+        
+        // Try to load audio preview from skin
+        if (elementLoader != null) {
+            // Try different audio files in order of preference
+            String[] audioFiles = {"welcome", "seeya", "menu-hit", "menuclick"};
+            Media audioPreview = null;
+            
+            for (String audioFile : audioFiles) {
+                audioPreview = elementLoader.loadAudio(audioFile);
+                if (audioPreview != null) {
+                    logger.info("Found audio preview: {}", audioFile);
+                    break;
+                }
+            }
+            
+            if (audioPreview != null) {
+                audioMixerService.playAudioPreview(audioPreview);
+                if (btnPlayPause != null) {
+                    btnPlayPause.setText("⏸");
+                }
+            } else {
+                logger.warn("No audio preview found in skin");
+            }
+        }
     }
     
     private void setupCanvasResizeListener() {
@@ -807,7 +812,6 @@ public class MainController implements Initializable {
      * This creates the renderers once and reuses them for all skin switches.
      */
     private void preInitializeRenderers() {
-        logger.info("Pre-initializing renderers...");
         
         // Create a dummy element loader for initialization
         elementLoader = new SkinElementLoader(null);
@@ -816,7 +820,6 @@ public class MainController implements Initializable {
         enhancedRenderer = new GameplayRenderer(gameplayCanvas, elementLoader);
         simpleRenderer = new SimpleGameplayRenderer(gameplayCanvas, elementLoader);
         
-        logger.info("Renderers pre-initialized");
     }
     
     private void displaySkinPreview(Skin skin) {
@@ -849,14 +852,14 @@ public class MainController implements Initializable {
             }
             if (previewLoadingLabel != null) {
                 previewLoadingLabel.textProperty().unbind();
-                previewLoadingLabel.setText("Loading skin...");
+                previewLoadingLabel.setText("Initializing...");
             }
         }
         
-        // Create async loading task
-        currentPreviewTask = asyncSkinLoader.createLoadTask(skin);
+        // Create async preview loading task
+        currentPreviewTask = asyncPreviewLoader.createPreviewTask(skin);
         
-        // Bind progress (after setting initial values)
+        // Bind progress
         if (previewProgressBar != null) {
             previewProgressBar.progressProperty().bind(currentPreviewTask.progressProperty());
         }
@@ -864,36 +867,92 @@ public class MainController implements Initializable {
             previewLoadingLabel.textProperty().bind(currentPreviewTask.messageProperty());
         }
         
-        // Handle completion
-        Task<AsyncSkinLoader.SkinLoadResult> thisTask = currentPreviewTask; // Capture reference
+        // Capture task reference for closure
+        Task<AsyncPreviewLoader.PreviewLoadResult> thisTask = currentPreviewTask;
+        
         currentPreviewTask.setOnSucceeded(e -> {
             // Only process if this is still the current task
             if (thisTask != currentPreviewTask) {
-                logger.debug("Ignoring completed task - a newer task has started");
                 return;
             }
             
-            AsyncSkinLoader.SkinLoadResult result = thisTask.getValue();
+            AsyncPreviewLoader.PreviewLoadResult result = thisTask.getValue();
             
-            if (result != null && result.success) {
-                // Update element loader
-                elementLoader = result.loader;
+            if (result != null && !result.wasCancelled) {
+                // Update element loader with preloaded elements
+                elementLoader = result.elementLoader;
                 
                 // Set element loader for audio mixer service
                 audioMixerService.setElementLoader(elementLoader);
                 
-                // Update renderers to use new element loader (reuse existing instances)
-                if (useEnhancedRenderer) {
-                    enhancedRenderer.setElementLoader(elementLoader);
-                } else {
-                    simpleRenderer.setElementLoader(elementLoader);
+                // Keep loading indicator visible and update message
+                if (previewLoadingLabel != null) {
+                    previewLoadingLabel.textProperty().unbind(); // Unbind first
+                    previewLoadingLabel.setText("Initializing renderer...");
+                }
+                if (previewProgressBar != null) {
+                    previewProgressBar.progressProperty().unbind(); // Unbind first
+                    previewProgressBar.setProgress(-1); // Indeterminate progress
                 }
                 
-                // Update element info
-                updateElementInfo();
+                // Initialize renderer asynchronously to avoid blocking UI
+                CompletableFuture.runAsync(() -> {
+                    // Update renderers
+                    if (useEnhancedRenderer) {
+                        enhancedRenderer.setElementLoader(elementLoader);
+                        enhancedRenderer.initialize();
+                    } else {
+                        simpleRenderer.setElementLoader(elementLoader);
+                        simpleRenderer.initialize();
+                    }
+                }).thenRun(() -> {
+                    // Back on UI thread after initialization
+                    Platform.runLater(() -> {
+                        // Only proceed if this is still the current task
+                        if (thisTask != currentPreviewTask) {
+                            return;
+                        }
+                        
+                        // Trigger initial resize for enhanced renderer
+                        if (useEnhancedRenderer) {
+                            if (canvasStackPane != null) {
+                                enhancedRenderer.onCanvasResize(canvasStackPane.getWidth(), canvasStackPane.getHeight());
+                            } else {
+                                enhancedRenderer.onCanvasResize();
+                            }
+                        }
+                        
+                        // Update element info
+                        updateElementInfo();
+                        
+                        // NOW hide loading indicator
+                        if (previewLoadingPane != null) {
+                            previewLoadingPane.setVisible(false);
+                            if (previewProgressBar != null) {
+                                previewProgressBar.progressProperty().unbind();
+                            }
+                            if (previewLoadingLabel != null) {
+                                previewLoadingLabel.textProperty().unbind();
+                            }
+                        }
+                        
+                        // Start animation
+                        scaleCanvasToFitContainer();
+                        startAutoplayAnimation();
+                    });
+                }).exceptionally(ex -> {
+                    logger.error("Failed to initialize renderer", ex);
+                    Platform.runLater(() -> {
+                        if (previewLoadingLabel != null) {
+                            previewLoadingLabel.setText("Failed to initialize renderer");
+                        }
+                    });
+                    return null;
+                });
                 
-                // Hide loading indicator and unbind
-                if (previewLoadingPane != null) {
+            } else if (result != null && result.wasCancelled) {
+                // Task was cancelled - hide loading pane
+                if (previewLoadingPane != null && thisTask == currentPreviewTask) {
                     previewLoadingPane.setVisible(false);
                     if (previewProgressBar != null) {
                         previewProgressBar.progressProperty().unbind();
@@ -902,84 +961,19 @@ public class MainController implements Initializable {
                         previewLoadingLabel.textProperty().unbind();
                     }
                 }
-                
-                // Use priority loader for progressive rendering
-                priorityLoader.loadSkinWithPriority(skin, elementLoader,
-                    () -> {
-                        // Critical elements loaded - show preview immediately
-                        scaleCanvasToFitContainer();
-                        if (useEnhancedRenderer) {
-                            enhancedRenderer.initialize();
-                            // Trigger initial resize with container dimensions
-                            if (canvasStackPane != null) {
-                                enhancedRenderer.onCanvasResize(canvasStackPane.getWidth(), canvasStackPane.getHeight());
-                            } else {
-                                enhancedRenderer.onCanvasResize();
-                            }
-                        } else {
-                            simpleRenderer.initialize();
-                        }
-                        startAutoplayAnimation();
-                    },
-                    () -> {
-                        // High priority loaded - update preview
-                        if (useEnhancedRenderer) {
-                            enhancedRenderer.updateElements();
-                        }
-                    },
-                    () -> {
-                        // Medium priority loaded - update preview
-                        if (useEnhancedRenderer) {
-                            enhancedRenderer.updateElements();
-                        }
-                    },
-                    () -> {
-                        // All elements loaded
-                        logger.info("All elements loaded for skin: {}", skin.getName());
-                    }
-                );
-            } else {
-                // Handle error or cancellation (but only if still current task)
-                if (result != null && "Loading cancelled".equals(result.errorMessage)) {
-                    // Task was cancelled - this is normal when switching skins quickly
-                    logger.debug("Skin loading cancelled for: {}", skin.getName());
-                    // Just hide the loading pane, don't show error
-                    if (previewLoadingPane != null && thisTask == currentPreviewTask) {
-                        previewLoadingPane.setVisible(false);
-                        if (previewProgressBar != null) {
-                            previewProgressBar.progressProperty().unbind();
-                        }
-                        if (previewLoadingLabel != null) {
-                            previewLoadingLabel.textProperty().unbind();
-                        }
-                    }
-                } else if (thisTask == currentPreviewTask) {
-                    // Real error
-                    String errorMsg = result != null && result.errorMessage != null ? 
-                        result.errorMessage : "Unknown error loading skin";
-                    logger.error("Failed to load skin: {}", errorMsg);
-                    if (previewLoadingLabel != null) {
-                        previewLoadingLabel.textProperty().unbind();
-                        previewLoadingLabel.setText("Error: " + errorMsg);
-                    }
-                    if (previewProgressBar != null) {
-                        previewProgressBar.progressProperty().unbind();
-                    }
-                }
             }
         });
         
         thisTask.setOnFailed(e -> {
             // Only process if this is still the current task
             if (thisTask != currentPreviewTask) {
-                logger.debug("Ignoring failed task - a newer task has started");
                 return;
             }
-            logger.error("Skin loading task failed", thisTask.getException());
+            logger.error("Preview loading failed", thisTask.getException());
             if (previewLoadingPane != null) {
                 if (previewLoadingLabel != null) {
                     previewLoadingLabel.textProperty().unbind();
-                    previewLoadingLabel.setText("Failed to load skin");
+                    previewLoadingLabel.setText("Failed to load preview");
                 }
                 if (previewProgressBar != null) {
                     previewProgressBar.progressProperty().unbind();

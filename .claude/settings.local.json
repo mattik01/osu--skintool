@@ -46,7 +46,10 @@
       "WebFetch(domain:osu.ppy.sh)",
       "Bash(dir:*)",
       "Bash(./test-index-performance.sh:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(powershell:*)",
+      "Bash(del \"C:\\Users\\glaes\\Desktop\\github\\osu!-skintool\\src\\main\\java\\com\\osuskin\\tool\\service\\AsyncSkinLoader.java\")",
+      "Bash(del:*)"
     ],
     "deny": [],
     "additionalDirectories": [

@@ -5,11 +5,14 @@ import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages the gameplay UI elements (health bar, score, combo counter, etc.)
  */
 public class GameplayUI {
+    private static final Logger logger = LoggerFactory.getLogger(GameplayUI.class);
     
     private final GraphicsContext gc;
     private com.osuskin.tool.service.SkinElementLoader elementLoader;
@@ -80,24 +83,42 @@ public class GameplayUI {
      */
     public void loadElements(com.osuskin.tool.service.SkinElementLoader loader) {
         this.elementLoader = loader;
+        int uiElementsLoaded = 0;
+        
         // Load health bar elements
+        com.osuskin.tool.util.PerformanceMonitor.startStep("Load Health Bar Elements");
         scorebarBg = loader.loadImage("scorebar-bg");
+        if (scorebarBg != null) uiElementsLoaded++;
         scorebarColour = loader.loadImage("scorebar-colour");
+        if (scorebarColour != null) uiElementsLoaded++;
         
         // Smart loading of scorebar animation frames
         loadOptimizedScorebarFrames(loader);
+        if (scorebarColourFrames != null) {
+            uiElementsLoaded += scorebarColourFrames.length;
+            com.osuskin.tool.util.PerformanceMonitor.recordMetadata("scorebarFramesLoaded", scorebarColourFrames.length);
+        }
         
         // Load markers without fallback - these are optional health indicators
         scorebarMarker = loader.loadImageNoFallback("scorebar-marker");
+        if (scorebarMarker != null) uiElementsLoaded++;
         scorebarKi = loader.loadImageNoFallback("scorebar-ki");
+        if (scorebarKi != null) uiElementsLoaded++;
         scorebarKiGlow = loader.loadImageNoFallback("scorebar-ki-glow");
+        if (scorebarKiGlow != null) uiElementsLoaded++;
         scorebarKiDanger = loader.loadImageNoFallback("scorebar-kidanger");
+        if (scorebarKiDanger != null) uiElementsLoaded++;
         scorebarKiDanger2 = loader.loadImageNoFallback("scorebar-kidanger2");
+        if (scorebarKiDanger2 != null) uiElementsLoaded++;
         
         // Legacy fallback
         scorebar = loader.loadImage("scorebar");
+        if (scorebar != null) uiElementsLoaded++;
+        com.osuskin.tool.util.PerformanceMonitor.endStep("Load Health Bar Elements");
+        com.osuskin.tool.util.PerformanceMonitor.recordMetadata("healthBarElementsLoaded", uiElementsLoaded);
         
         // Load score numbers with custom prefix support
+        com.osuskin.tool.util.PerformanceMonitor.startStep("Load Score/Combo Numbers");
         String scorePrefix = "score";
         String comboPrefix = "score";  // Default combo uses score prefix
         
@@ -110,20 +131,30 @@ public class GameplayUI {
             }
         }
         
+        int numbersLoaded = 0;
         for (int i = 0; i < 10; i++) {
             scoreNumbers[i] = loader.loadImageWithPrefix(scorePrefix, "-" + i);
             if (scoreNumbers[i] == null) {
                 scoreNumbers[i] = loader.loadImage("score-" + i);
             }
+            if (scoreNumbers[i] != null) numbersLoaded++;
             
             comboNumbers[i] = loader.loadImageWithPrefix(comboPrefix, "-" + i);
             if (comboNumbers[i] == null) {
                 comboNumbers[i] = loader.loadImage("combo-" + i);
             }
+            if (comboNumbers[i] != null) numbersLoaded++;
         }
+        uiElementsLoaded += numbersLoaded;
+        com.osuskin.tool.util.PerformanceMonitor.recordMetadata("numbersLoaded", numbersLoaded);
         
         comboX = loader.loadImage("combo-x");
+        if (comboX != null) uiElementsLoaded++;
         scorePercent = loader.loadImage("score-percent");
+        if (scorePercent != null) uiElementsLoaded++;
+        com.osuskin.tool.util.PerformanceMonitor.endStep("Load Score/Combo Numbers");
+        
+        com.osuskin.tool.util.PerformanceMonitor.recordMetadata("totalUIElementsLoaded", uiElementsLoaded);
     }
     
     /**
@@ -674,6 +705,7 @@ public class GameplayUI {
      * Uses exponential search to find frame range, then samples evenly.
      */
     private void loadOptimizedScorebarFrames(com.osuskin.tool.service.SkinElementLoader loader) {
+        com.osuskin.tool.util.PerformanceMonitor.startStep("Load Scorebar Animation Frames");
         final int MAX_SCOREBAR_FRAMES = 10;  // Maximum frames to load
         
         // Step 1: Find actual frame range using exponential search
@@ -682,6 +714,8 @@ public class GameplayUI {
         if (maxFrame < 0) {
             // No numbered frames found - clear any existing frames and use static scorebarColour as fallback
             scorebarColourFrames = null;
+            com.osuskin.tool.util.PerformanceMonitor.recordMetadata("scorebarAnimationFound", false);
+            com.osuskin.tool.util.PerformanceMonitor.endStep("Load Scorebar Animation Frames");
             return;
         }
         
@@ -689,6 +723,7 @@ public class GameplayUI {
         java.util.List<Image> frames = new java.util.ArrayList<>();
         int minFrame = 0;
         int totalFrames = maxFrame - minFrame + 1;
+        com.osuskin.tool.util.PerformanceMonitor.recordMetadata("scorebarTotalFrames", totalFrames);
         
         if (totalFrames <= MAX_SCOREBAR_FRAMES) {
             // Load all frames if 10 or fewer
@@ -698,6 +733,7 @@ public class GameplayUI {
             }
         } else {
             // Sample evenly across the range
+            com.osuskin.tool.util.PerformanceMonitor.recordMetadata("scorebarSampling", true);
             double interval = (double)(maxFrame - minFrame) / (MAX_SCOREBAR_FRAMES - 1);
             for (int i = 0; i < MAX_SCOREBAR_FRAMES; i++) {
                 int frameNum = minFrame + (int)(i * interval);
@@ -708,11 +744,13 @@ public class GameplayUI {
         
         if (!frames.isEmpty()) {
             scorebarColourFrames = frames.toArray(new Image[0]);
-            System.out.println("Loaded " + frames.size() + " scorebar frames (from " + totalFrames + " available)");
+            // Use logger instead of System.out, and only log in debug mode
+            logger.debug("Loaded {} scorebar frames (from {} available)", frames.size(), totalFrames);
         } else {
             // Clear frames if nothing was loaded successfully
             scorebarColourFrames = null;
         }
+        com.osuskin.tool.util.PerformanceMonitor.endStep("Load Scorebar Animation Frames");
     }
     
     /**

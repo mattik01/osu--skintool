@@ -1,6 +1,7 @@
 package com.osuskin.tool.view.gameplay;
 
 import com.osuskin.tool.service.SkinElementLoader;
+import com.osuskin.tool.util.PerformanceMonitor;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
@@ -96,10 +97,12 @@ public class GameplayRenderer {
     private List<int[]> comboColors = new ArrayList<>();
     
     public GameplayRenderer(Canvas canvas, SkinElementLoader elementLoader) {
+        PerformanceMonitor.startStep("GameplayRenderer Construction");
         this.canvas = canvas;
         this.elementLoader = elementLoader;
         this.gc = canvas.getGraphicsContext2D();
         this.gameplayUI = new GameplayUI(gc);
+        PerformanceMonitor.endStep("GameplayRenderer Construction");
     }
     
     /**
@@ -107,33 +110,42 @@ public class GameplayRenderer {
      */
     public void setElementLoader(SkinElementLoader elementLoader) {
         this.elementLoader = elementLoader;
-        // Re-initialize with new skin
-        initialize();
+        // Don't call initialize() here - it will be called explicitly by the caller
+        // This was causing double initialization
     }
     
-    /**
-     * Reload elements after priority loading completes.
-     */
-    public void updateElements() {
-        loadElements();
-        gameplayUI.loadElements(elementLoader);
-    }
     
     public void initialize() {
+        PerformanceMonitor.startStep("GameplayRenderer Initialization");
+        
         // Get the current skin from elementLoader
+        PerformanceMonitor.startStep("Get Current Skin");
         currentSkin = elementLoader.getCurrentSkin();
+        PerformanceMonitor.endStep("Get Current Skin");
         
         // Get combo colors from skin
+        PerformanceMonitor.startStep("Load Combo Colors");
         if (currentSkin != null && currentSkin.getComboColors() != null) {
             comboColors = currentSkin.getComboColors();
+            PerformanceMonitor.recordMetadata("comboColorCount", comboColors.size());
         }
+        PerformanceMonitor.endStep("Load Combo Colors");
         
+        PerformanceMonitor.startStep("Load Renderer Elements");
         loadElements();
+        PerformanceMonitor.endStep("Load Renderer Elements");
+        
+        PerformanceMonitor.startStep("Load UI Elements");
         gameplayUI.loadElements(elementLoader);
         // No scaling for UI elements
         gameplayUI.setScale(1.0);
+        PerformanceMonitor.endStep("Load UI Elements");
+        
+        PerformanceMonitor.startStep("Setup Hit Objects");
         setupHitObjects();
-        logger.info("GameplayRenderer initialized with enhanced features");
+        PerformanceMonitor.endStep("Setup Hit Objects");
+        
+        PerformanceMonitor.endStep("GameplayRenderer Initialization");
     }
     
     /**
@@ -213,25 +225,51 @@ public class GameplayRenderer {
     }
     
     private void loadElements() {
+        PerformanceMonitor.startStep("Load Basic Hit Elements");
+        int hitElementsLoaded = 0;
         // Load basic elements
         hitCircle = elementLoader.loadImage("hitcircle");
+        if (hitCircle != null) hitElementsLoaded++;
         hitCircleOverlay = elementLoader.loadImage("hitcircleoverlay");
+        if (hitCircleOverlay != null) hitElementsLoaded++;
         approachCircle = elementLoader.loadImage("approachcircle");
-        cursor = elementLoader.loadImage("cursor");
-        cursorTrail = elementLoader.loadImage("cursortrail");
-        lightingImage = elementLoader.loadImage("lighting");
+        if (approachCircle != null) hitElementsLoaded++;
+        PerformanceMonitor.recordMetadata("hitElementsLoaded", hitElementsLoaded);
+        PerformanceMonitor.endStep("Load Basic Hit Elements");
         
+        PerformanceMonitor.startStep("Load Cursor Elements");
+        int cursorElementsLoaded = 0;
+        cursor = elementLoader.loadImage("cursor");
+        if (cursor != null) cursorElementsLoaded++;
+        cursorTrail = elementLoader.loadImage("cursortrail");
+        if (cursorTrail != null) cursorElementsLoaded++;
+        lightingImage = elementLoader.loadImage("lighting");
+        if (lightingImage != null) cursorElementsLoaded++;
+        PerformanceMonitor.recordMetadata("cursorElementsLoaded", cursorElementsLoaded);
+        PerformanceMonitor.endStep("Load Cursor Elements");
+        
+        PerformanceMonitor.startStep("Load Slider Elements");
+        int sliderElementsLoaded = 0;
         // Load slider elements
         sliderBody = elementLoader.loadImage("sliderb");
+        if (sliderBody != null) sliderElementsLoaded++;
         sliderBall = elementLoader.loadImage("sliderball");
+        if (sliderBall != null) sliderElementsLoaded++;
         sliderFollowCircle = elementLoader.loadImage("sliderfollowcircle");
+        if (sliderFollowCircle != null) sliderElementsLoaded++;
         reverseArrow = elementLoader.loadImage("reversearrow");
+        if (reverseArrow != null) sliderElementsLoaded++;
+        PerformanceMonitor.recordMetadata("sliderElementsLoaded", sliderElementsLoaded);
+        PerformanceMonitor.endStep("Load Slider Elements");
         
+        PerformanceMonitor.startStep("Load Number Elements");
+        int numbersLoaded = 0;
         // Load numbers with custom prefix support
         String hitCirclePrefix = "default";
         if (currentSkin != null && currentSkin.getHitCirclePrefix() != null) {
             hitCirclePrefix = currentSkin.getHitCirclePrefix();
         }
+        PerformanceMonitor.recordMetadata("numberPrefix", hitCirclePrefix);
         
         for (int i = 0; i < 10; i++) {
             defaultNumbers[i] = elementLoader.loadImageWithPrefix(hitCirclePrefix, "-" + i);
@@ -239,21 +277,29 @@ public class GameplayRenderer {
                 // Fallback to default if custom prefix not found
                 defaultNumbers[i] = elementLoader.loadImage("default-" + i);
             }
+            if (defaultNumbers[i] != null) numbersLoaded++;
         }
+        PerformanceMonitor.recordMetadata("numbersLoaded", numbersLoaded + "/10");
+        PerformanceMonitor.endStep("Load Number Elements");
         
         // Load hit burst animations
+        PerformanceMonitor.startStep("Load Hit Burst Animations");
         loadHitBurstImages();
+        PerformanceMonitor.endStep("Load Hit Burst Animations");
         
         logger.debug("Loaded all elements including hit bursts, lighting, and sliders");
     }
     
     private void loadHitBurstImages() {
+        int totalBurstFramesLoaded = 0;
         // Try to load animated frames first, fall back to static
         for (HitObject.HitResult result : HitObject.HitResult.values()) {
             if (result == HitObject.HitResult.NONE) continue;
             
             String prefix = getHitBurstPrefix(result);
             List<Image> frames = new ArrayList<>();
+            
+            PerformanceMonitor.startStep("Load Hit Burst: " + result);
             
             // Try loading animated frames (hit300-0.png, hit300-1.png, etc.)
             for (int i = 0; i < 10; i++) {
@@ -275,9 +321,16 @@ public class GameplayRenderer {
             
             if (!frames.isEmpty()) {
                 hitBurstFrames.put(result, frames.toArray(new Image[0]));
+                PerformanceMonitor.recordMetadata("framesLoaded", frames.size());
+                totalBurstFramesLoaded += frames.size();
                 logger.debug("Loaded {} frames for {}", frames.size(), result);
+            } else {
+                PerformanceMonitor.recordMetadata("framesLoaded", 0);
             }
+            
+            PerformanceMonitor.endStep("Load Hit Burst: " + result);
         }
+        PerformanceMonitor.recordMetadata("totalBurstFramesLoaded", totalBurstFramesLoaded);
     }
     
     private String getHitBurstPrefix(HitObject.HitResult result) {

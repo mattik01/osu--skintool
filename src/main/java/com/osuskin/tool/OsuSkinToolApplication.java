@@ -1,8 +1,9 @@
 package com.osuskin.tool;
 
 import com.osuskin.tool.controller.MainController;
-import com.osuskin.tool.service.ConfigurationService;
+import com.osuskin.tool.service.DefaultSkinCache;
 import com.osuskin.tool.util.ConfigurationManager;
+import com.osuskin.tool.util.OsuPathDetector;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -30,6 +31,9 @@ public class OsuSkinToolApplication extends Application {
         // Initialize configuration manager
         configurationManager = new ConfigurationManager();
         configurationManager.loadConfiguration();
+        
+        // Initialize default skin cache at startup
+        initializeDefaultSkinCache();
         
         logger.info("Application initialization completed");
     }
@@ -89,12 +93,53 @@ public class OsuSkinToolApplication extends Application {
     private void shutdown() {
         try {
             logger.info("Shutting down application");
+            
+            // Save configuration
             if (configurationManager != null) {
                 configurationManager.saveConfiguration();
             }
+            
+            // Shutdown services with thread pools
+            try {
+                com.osuskin.tool.service.AsyncPreviewLoader.shutdown();
+                logger.info("AsyncPreviewLoader shutdown completed");
+            } catch (Exception e) {
+                logger.error("Error shutting down AsyncPreviewLoader", e);
+            }
+            
             logger.info("Application shutdown completed");
+            
         } catch (Exception e) {
             logger.error("Error during application shutdown", e);
+        }
+    }
+    
+    private void initializeDefaultSkinCache() {
+        try {
+            logger.info("Initializing default skin cache...");
+            
+            // Try to find default skin directory
+            java.nio.file.Path defaultSkinPath = null;
+            java.nio.file.Path osuSkinsPath = OsuPathDetector.getDefaultOsuSkinsPath();
+            if (osuSkinsPath != null) {
+                java.nio.file.Path defaultDir = osuSkinsPath.resolve("default");
+                if (java.nio.file.Files.exists(defaultDir)) {
+                    defaultSkinPath = defaultDir;
+                    logger.info("Found default skin directory: {}", defaultSkinPath);
+                }
+            }
+            
+            // Initialize the cache (will load from resources if no directory found)
+            DefaultSkinCache cache = DefaultSkinCache.getInstance();
+            cache.initialize(defaultSkinPath).thenRun(() -> {
+                logger.info("Default skin cache initialized: {}", cache.getStats());
+            }).exceptionally(ex -> {
+                logger.error("Failed to initialize default skin cache", ex);
+                return null;
+            });
+            
+        } catch (Exception e) {
+            logger.error("Error initializing default skin cache", e);
         }
     }
     
