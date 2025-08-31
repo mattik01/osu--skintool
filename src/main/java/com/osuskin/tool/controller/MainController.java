@@ -145,6 +145,7 @@ public class MainController implements Initializable {
     // Arrangement system
     private ImprovedHitsoundRenderer hitsoundRenderer;
     private ArrangementPlayer arrangementPlayer;
+    private String pendingArrangementReload = null;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -222,6 +223,23 @@ public class MainController implements Initializable {
         
         // Update UI based on configuration
         Configuration config = configurationManager.getConfiguration();
+        
+        // Initialize audio mixer with configuration values
+        audioMixerService.initializeFromConfiguration(config);
+        
+        // Initialize arrangement player with configuration values
+        if (arrangementPlayer != null) {
+            arrangementPlayer.setAudioVolume(config.getMusicVolume());
+            arrangementPlayer.setHitsoundVolume(config.getEffectsVolume());
+        }
+        
+        // Set volume sliders from configuration
+        if (audioVolumeSlider != null) {
+            audioVolumeSlider.setValue(config.getMusicVolume() * 100);
+        }
+        if (hitsoundVolumeSlider != null) {
+            hitsoundVolumeSlider.setValue(config.getEffectsVolume() * 100);
+        }
         
         // Set persistent state for skin container service
         skinContainerService.setPersistentState(config.getSkinContainerState());
@@ -356,27 +374,43 @@ public class MainController implements Initializable {
     }
     
     private void resetAudioSystemForNewSkin() {
-        // Stop any current playback
-        if (arrangementPlayer != null) {
-            arrangementPlayer.stop();
+        // Check if arrangement is currently playing
+        boolean wasPlayingArrangement = arrangementPlayer != null && arrangementPlayer.isPlaying();
+        String currentArrangement = null;
+        
+        if (wasPlayingArrangement) {
+            currentArrangement = arrangementPlayer.getCurrentArrangementName();
         }
+        
+        // Stop audio mixer but not arrangement player
         if (audioMixerService != null) {
             audioMixerService.stop();
-        }
-        
-        // Reset play button
-        if (btnPlayPause != null) {
-            btnPlayPause.setText("▶");
-        }
-        
-        // Clear status
-        if (lblNowPlaying != null && sampleSelector != null && sampleSelector.getValue() != null) {
-            lblNowPlaying.setText("Ready: " + sampleSelector.getValue());
         }
         
         // Clear hitsound cache
         if (hitsoundRenderer != null) {
             hitsoundRenderer.clearCache();
+        }
+        
+        // If arrangement was playing, we'll reload hitsounds after the skin loads
+        if (wasPlayingArrangement && currentArrangement != null) {
+            // Store for later reload
+            this.pendingArrangementReload = currentArrangement;
+        } else {
+            // Not playing arrangement, stop everything
+            if (arrangementPlayer != null) {
+                arrangementPlayer.stop();
+            }
+            
+            // Reset play button
+            if (btnPlayPause != null) {
+                btnPlayPause.setText("▶");
+            }
+            
+            // Clear status
+            if (lblNowPlaying != null && sampleSelector != null && sampleSelector.getValue() != null) {
+                lblNowPlaying.setText("Ready: " + sampleSelector.getValue());
+            }
         }
     }
     
@@ -659,6 +693,13 @@ public class MainController implements Initializable {
                 // Pass normalized value (0-1) to services
                 audioMixerService.setAudioVolume(sliderValue / 100.0);
                 arrangementPlayer.setAudioVolume(sliderValue / 100.0);
+                
+                // Save to configuration
+                if (configurationManager != null) {
+                    Configuration config = configurationManager.getConfiguration();
+                    config.setMusicVolume(sliderValue / 100.0);
+                    configurationManager.saveConfiguration();
+                }
             });
         }
         
@@ -669,6 +710,13 @@ public class MainController implements Initializable {
                 // Pass normalized value (0-1) to services
                 audioMixerService.setHitsoundVolume(sliderValue / 100.0);
                 arrangementPlayer.setHitsoundVolume(sliderValue / 100.0);
+                
+                // Save to configuration
+                if (configurationManager != null) {
+                    Configuration config = configurationManager.getConfiguration();
+                    config.setEffectsVolume(sliderValue / 100.0);
+                    configurationManager.saveConfiguration();
+                }
             });
         }
     }
@@ -684,16 +732,64 @@ public class MainController implements Initializable {
             sampleSelector.setVisible(true);
             sampleSelector.setManaged(true);
             
-            // Add listener to stop and reset when selection changes
+            // Add listener to automatically play new arrangement when selection changes
             sampleSelector.valueProperty().addListener((observable, oldValue, newValue) -> {
-                if (oldValue != null && !oldValue.equals(newValue)) {
-                    // Stop current playback when changing selection
+                if (oldValue != null && !oldValue.equals(newValue) && newValue != null) {
+                    // Check if we were playing before
+                    boolean wasPlaying = arrangementPlayer.isPlaying();
+                    
+                    // Stop current playback
                     arrangementPlayer.stop();
-                    if (btnPlayPause != null) {
-                        btnPlayPause.setText("▶");
-                    }
-                    if (lblNowPlaying != null) {
-                        lblNowPlaying.setText("Ready: " + newValue);
+                    
+                    // If we were playing, automatically start the new arrangement
+                    if (wasPlaying) {
+                        logger.info("Auto-playing new arrangement: {}", newValue);
+                        
+                        // Keep button in playing state
+                        if (btnPlayPause != null) {
+                            btnPlayPause.setText("⏸");
+                        }
+                        if (lblNowPlaying != null) {
+                            lblNowPlaying.setText("Loading: " + newValue);
+                        }
+                        
+                        // Set element loader for hitsound renderer
+                        if (elementLoader != null) {
+                            hitsoundRenderer.setElementLoader(elementLoader);
+                            // Set skin path if available
+                            Skin selectedSkin = listSkins.getSelectionModel().getSelectedItem();
+                            if (selectedSkin != null && selectedSkin.getDirectoryPath() != null) {
+                                hitsoundRenderer.setSkinPath(Paths.get(selectedSkin.getDirectoryPath()));
+                            }
+                        }
+                        
+                        // Play the new arrangement
+                        arrangementPlayer.playArrangement(newValue)
+                            .thenRun(() -> Platform.runLater(() -> {
+                                if (lblNowPlaying != null) {
+                                    lblNowPlaying.setText("Playing: " + newValue);
+                                }
+                            }))
+                            .exceptionally(ex -> {
+                                logger.error("Failed to play arrangement", ex);
+                                Platform.runLater(() -> {
+                                    if (lblNowPlaying != null) {
+                                        lblNowPlaying.setText("Error loading arrangement");
+                                    }
+                                    if (btnPlayPause != null) {
+                                        btnPlayPause.setText("▶");
+                                    }
+                                });
+                                return null;
+                            });
+                    } else {
+                        // Not playing, just update the status
+                        if (btnPlayPause != null) {
+                            btnPlayPause.setText("▶");
+                        }
+                        if (lblNowPlaying != null) {
+                            lblNowPlaying.setText("Ready: " + newValue);
+                        }
                     }
                 }
             });
@@ -1014,6 +1110,35 @@ public class MainController implements Initializable {
                 audioMixerService.setElementLoader(elementLoader);
                 hitsoundRenderer.setElementLoader(elementLoader);
                 hitsoundRenderer.setSkinPath(Paths.get(skin.getDirectoryPath()));
+                
+                // Check if we need to reload arrangement with new hitsounds
+                if (pendingArrangementReload != null) {
+                    String arrangementToReload = pendingArrangementReload;
+                    pendingArrangementReload = null;
+                    
+                    // Reload the arrangement with new hitsounds
+                    Platform.runLater(() -> {
+                        logger.info("Reloading arrangement with new hitsounds: {}", arrangementToReload);
+                        arrangementPlayer.playArrangement(arrangementToReload, true)
+                            .thenRun(() -> Platform.runLater(() -> {
+                                if (lblNowPlaying != null) {
+                                    lblNowPlaying.setText("Playing: " + arrangementToReload);
+                                }
+                            }))
+                            .exceptionally(ex -> {
+                                logger.error("Failed to reload arrangement", ex);
+                                Platform.runLater(() -> {
+                                    if (lblNowPlaying != null) {
+                                        lblNowPlaying.setText("Error reloading arrangement");
+                                    }
+                                    if (btnPlayPause != null) {
+                                        btnPlayPause.setText("▶");
+                                    }
+                                });
+                                return null;
+                            });
+                    });
+                }
                 
                 // Keep loading indicator visible and update message
                 if (previewLoadingLabel != null) {

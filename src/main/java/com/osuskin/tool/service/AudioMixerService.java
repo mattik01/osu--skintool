@@ -5,6 +5,7 @@ import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.osuskin.tool.model.Configuration;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -25,6 +26,15 @@ public class AudioMixerService {
     
     public AudioMixerService() {
         logger.info("AudioMixerService initialized");
+    }
+    
+    public void initializeFromConfiguration(Configuration config) {
+        if (config != null) {
+            this.audioVolume = config.getMusicVolume();
+            this.hitsoundVolume = config.getEffectsVolume();
+            logger.info("Audio volumes initialized from configuration - Music: {}, Effects: {}", 
+                       audioVolume, hitsoundVolume);
+        }
     }
     
     public void setElementLoader(SkinElementLoader elementLoader) {

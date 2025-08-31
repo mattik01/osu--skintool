@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * OGG Vorbis decoder that converts OGG files to WAV format in cache.
@@ -122,11 +123,44 @@ public class OggDecoder {
                 wavPath.toString()
             );
             
-            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
-            pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            // Redirect to PIPE and consume the streams to avoid 'nul' file creation on Windows
+            pb.redirectError(ProcessBuilder.Redirect.PIPE);
+            pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
             
             Process process = pb.start();
-            int exitCode = process.waitFor();
+            
+            // Consume output streams to prevent blocking and avoid 'nul' file creation
+            try (BufferedReader stdOut = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                 BufferedReader stdErr = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                // Consume streams in background
+                Thread outConsumer = new Thread(() -> {
+                    try {
+                        while (stdOut.readLine() != null) {
+                            // Discard output
+                        }
+                    } catch (IOException ignored) {}
+                });
+                Thread errConsumer = new Thread(() -> {
+                    try {
+                        while (stdErr.readLine() != null) {
+                            // Discard errors
+                        }
+                    } catch (IOException ignored) {}
+                });
+                outConsumer.start();
+                errConsumer.start();
+                
+                boolean finished = process.waitFor(10, TimeUnit.SECONDS);
+                if (!finished) {
+                    process.destroyForcibly();
+                    return false;
+                }
+                
+                outConsumer.join(1000);
+                errConsumer.join(1000);
+            }
+            
+            int exitCode = process.exitValue();
             
             if (exitCode == 0 && Files.exists(wavPath)) {
                 logger.info("Converted OGG to WAV using FFmpeg: {}", oggPath.getFileName());
@@ -169,11 +203,42 @@ public class OggDecoder {
                 "vlc://quit"
             );
             
-            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
-            pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            // Redirect to PIPE and consume the streams to avoid 'nul' file creation on Windows
+            pb.redirectError(ProcessBuilder.Redirect.PIPE);
+            pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
             
             Process process = pb.start();
-            process.waitFor();
+            
+            // Consume output streams to prevent blocking and avoid 'nul' file creation
+            try (BufferedReader stdOut = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                 BufferedReader stdErr = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                // Consume streams in background
+                Thread outConsumer = new Thread(() -> {
+                    try {
+                        while (stdOut.readLine() != null) {
+                            // Discard output
+                        }
+                    } catch (IOException ignored) {}
+                });
+                Thread errConsumer = new Thread(() -> {
+                    try {
+                        while (stdErr.readLine() != null) {
+                            // Discard errors
+                        }
+                    } catch (IOException ignored) {}
+                });
+                outConsumer.start();
+                errConsumer.start();
+                
+                boolean finished = process.waitFor(10, TimeUnit.SECONDS);
+                if (!finished) {
+                    process.destroyForcibly();
+                    return false;
+                }
+                
+                outConsumer.join(1000);
+                errConsumer.join(1000);
+            }
             
             // VLC doesn't always return proper exit codes, check if file was created
             Thread.sleep(500); // Give VLC time to write the file

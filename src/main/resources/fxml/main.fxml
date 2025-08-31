@@ -116,6 +116,7 @@
                                                 <Slider fx:id="audioVolumeSlider" min="0" max="100" value="50" 
                                                         showTickLabels="false" showTickMarks="false" 
                                                         maxWidth="180" HBox.hgrow="NEVER" />
+                                                <Label text="Music" />
                                              </children>
                                           </HBox>
                                           
@@ -126,6 +127,7 @@
                                                 <Slider fx:id="hitsoundVolumeSlider" min="0" max="100" value="50" 
                                                         showTickLabels="false" showTickMarks="false" 
                                                         maxWidth="180" HBox.hgrow="NEVER" />
+                                                <Label text="Effects" />
                                              </children>
                                           </HBox>
                                           

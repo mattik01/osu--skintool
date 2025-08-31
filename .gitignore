@@ -66,6 +66,9 @@ dist/
 *.tmp
 *.temp
 
+# Windows nul file (created by ProcessBuilder bug)
+nul
+
 # Beatmap hitsound extractor
 beatmap-hitsound-extractor/beatmaps/
 beatmap-hitsound-extractor/extracted_arrangements/

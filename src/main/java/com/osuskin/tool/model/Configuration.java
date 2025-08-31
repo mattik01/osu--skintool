@@ -47,6 +47,12 @@ public class Configuration {
     @JsonProperty("skinContainerState")
     private SkinContainerState skinContainerState = new SkinContainerState();
     
+    @JsonProperty("musicVolume")
+    private double musicVolume = 0.5;
+    
+    @JsonProperty("effectsVolume")
+    private double effectsVolume = 0.5;
+    
     public Configuration() {
         // Default constructor for Jackson
     }
@@ -179,6 +185,22 @@ public class Configuration {
         this.skinContainerState = skinContainerState;
     }
     
+    public double getMusicVolume() {
+        return musicVolume;
+    }
+    
+    public void setMusicVolume(double musicVolume) {
+        this.musicVolume = Math.max(0.0, Math.min(1.0, musicVolume));
+    }
+    
+    public double getEffectsVolume() {
+        return effectsVolume;
+    }
+    
+    public void setEffectsVolume(double effectsVolume) {
+        this.effectsVolume = Math.max(0.0, Math.min(1.0, effectsVolume));
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -191,6 +213,8 @@ public class Configuration {
                Double.compare(that.windowWidth, windowWidth) == 0 &&
                Double.compare(that.windowHeight, windowHeight) == 0 &&
                windowMaximized == that.windowMaximized &&
+               Double.compare(that.musicVolume, musicVolume) == 0 &&
+               Double.compare(that.effectsVolume, effectsVolume) == 0 &&
                Objects.equals(osuSkinsDirectory, that.osuSkinsDirectory) &&
                Objects.equals(skinContainerPath, that.skinContainerPath) &&
                Objects.equals(cacheDirectory, that.cacheDirectory) &&
@@ -202,7 +226,7 @@ public class Configuration {
         return Objects.hash(osuSkinsDirectory, skinContainerPath, cacheDirectory, 
                           lastScanTime, thumbnailSize, audioPreviewDuration, 
                           enableAudioPreview, autoScanOnStartup, windowWidth, 
-                          windowHeight, windowMaximized);
+                          windowHeight, windowMaximized, musicVolume, effectsVolume);
     }
     
     @Override

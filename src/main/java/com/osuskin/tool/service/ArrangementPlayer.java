@@ -78,9 +78,20 @@ public class ArrangementPlayer {
      * Play an arrangement by name
      */
     public CompletableFuture<Void> playArrangement(String arrangementName) {
+        return playArrangement(arrangementName, false);
+    }
+    
+    /**
+     * Play an arrangement by name with option to just reload hitsounds
+     * @param arrangementName Name of the arrangement
+     * @param reloadHitsoundsOnly If true, keeps audio playing but reloads hitsounds
+     */
+    public CompletableFuture<Void> playArrangement(String arrangementName, boolean reloadHitsoundsOnly) {
         return CompletableFuture.runAsync(() -> {
             try {
-                stop(); // Stop any current playback
+                if (!reloadHitsoundsOnly) {
+                    stop(); // Stop any current playback
+                }
                 
                 currentArrangementName = arrangementName;
                 
@@ -100,7 +111,12 @@ public class ArrangementPlayer {
                 // Render hitsounds into pre-mixed audio
                 renderer.renderArrangement(arrangement).thenAccept(mixedAudio -> {
                     Platform.runLater(() -> {
-                        playArrangementWithMixedAudio(backgroundAudio, mixedAudio);
+                        if (reloadHitsoundsOnly && isPlaying) {
+                            // Just reload hitsounds and restart from beginning
+                            reloadHitsoundsAndRestart(backgroundAudio, mixedAudio);
+                        } else {
+                            playArrangementWithMixedAudio(backgroundAudio, mixedAudio);
+                        }
                     });
                 }).exceptionally(ex -> {
                     logger.error("Failed to render arrangement", ex);
@@ -188,6 +204,35 @@ public class ArrangementPlayer {
             
         } catch (Exception e) {
             logger.error("Failed to setup mixed audio playback", e);
+            stop();
+        }
+    }
+    
+    /**
+     * Reload hitsounds with new skin and restart playback from beginning
+     */
+    private void reloadHitsoundsAndRestart(Media backgroundAudio, 
+                                            ImprovedHitsoundRenderer.MixedAudio mixedAudio) {
+        try {
+            // Store new audio references
+            currentBackgroundAudio = backgroundAudio;
+            currentMixedAudio = mixedAudio;
+            
+            // Stop current playback
+            if (backgroundAudioPlayer != null) {
+                backgroundAudioPlayer.stop();
+                backgroundAudioPlayer.dispose();
+            }
+            if (hitsoundClip != null) {
+                hitsoundClip.stop();
+                hitsoundClip.close();
+            }
+            
+            // Start fresh with new hitsounds
+            playArrangementWithMixedAudio(backgroundAudio, mixedAudio);
+            
+        } catch (Exception e) {
+            logger.error("Failed to reload hitsounds and restart", e);
             stop();
         }
     }
@@ -326,6 +371,10 @@ public class ArrangementPlayer {
     
     public boolean isPlaying() {
         return isPlaying;
+    }
+    
+    public String getCurrentArrangementName() {
+        return currentArrangementName;
     }
     
     public boolean isLooping() {
