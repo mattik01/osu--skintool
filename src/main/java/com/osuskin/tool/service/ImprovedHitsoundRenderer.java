@@ -45,10 +45,14 @@ public class ImprovedHitsoundRenderer {
     
     public void setSkinPath(Path skinPath) {
         if (!Objects.equals(this.currentSkinPath, skinPath)) {
+            logger.info("[HITSOUND-RENDERER] Skin path changed from {} to {}", 
+                this.currentSkinPath, skinPath);
             this.currentSkinPath = skinPath;
             // Clear all caches when skin changes to force re-rendering
             clearCache();
             mapSkinHitsounds();
+        } else {
+            logger.debug("[HITSOUND-RENDERER] Skin path unchanged: {}", skinPath);
         }
     }
     
@@ -64,6 +68,9 @@ public class ImprovedHitsoundRenderer {
             "normal-sliderslide", "soft-sliderslide", "drum-sliderslide"
         };
         
+        logger.info("[HITSOUND-RENDERER] Loading default hitsounds...");
+        int loadedCount = 0;
+        
         for (String name : hitsoundNames) {
             // Check for default resources
             String[] extensions = {".wav", ".mp3", ".ogg"};
@@ -74,15 +81,20 @@ public class ImprovedHitsoundRenderer {
                     try {
                         // Convert to file path for AudioMixer
                         File tempFile = extractResourceToTemp(resourcePath, name + ext);
-                        hitsoundFileCache.put(name, tempFile.getAbsolutePath());
-                        logger.debug("Loaded default hitsound: {}", name);
+                        // Store with "default-" prefix to distinguish from skin hitsounds
+                        hitsoundFileCache.put("default-" + name, tempFile.getAbsolutePath());
+                        logger.info("[HITSOUND-RENDERER] Loaded default hitsound: {} -> {}", 
+                            name, tempFile.getAbsolutePath());
+                        loadedCount++;
                         break;
                     } catch (Exception e) {
-                        logger.debug("Failed to extract default hitsound: {}", name);
+                        logger.warn("[HITSOUND-RENDERER] Failed to extract default hitsound: {}", name, e);
                     }
                 }
             }
         }
+        
+        logger.info("[HITSOUND-RENDERER] Loaded {} default hitsounds", loadedCount);
     }
     
     /**
@@ -90,24 +102,65 @@ public class ImprovedHitsoundRenderer {
      */
     private void mapSkinHitsounds() {
         if (currentSkinPath == null || !Files.exists(currentSkinPath)) {
+            logger.warn("[HITSOUND-RENDERER] Cannot map hitsounds - skin path is null or doesn't exist: {}", currentSkinPath);
             return;
         }
         
+        logger.info("[HITSOUND-RENDERER] Mapping hitsounds for skin: {}", currentSkinPath);
+        
+        // Clear skin-specific entries first (keep defaults)
+        Map<String, String> defaultsOnly = new HashMap<>();
+        hitsoundFileCache.forEach((key, value) -> {
+            if (value.contains("temp") || value.contains("default")) {
+                defaultsOnly.put(key, value);
+            }
+        });
+        hitsoundFileCache.clear();
+        hitsoundFileCache.putAll(defaultsOnly);
+        
+        int mappedCount = 0;
         try {
-            Files.list(currentSkinPath)
+            List<Path> files = Files.list(currentSkinPath)
                 .filter(Files::isRegularFile)
-                .forEach(path -> {
-                    String fileName = path.getFileName().toString().toLowerCase();
-                    String nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
-                    
-                    // Check if it's a hitsound file
-                    if (isHitsoundFile(nameWithoutExt)) {
-                        hitsoundFileCache.put(nameWithoutExt, path.toAbsolutePath().toString());
-                        logger.debug("Mapped skin hitsound: {} -> {}", nameWithoutExt, path);
+                .toList();
+                
+            for (Path path : files) {
+                String fileName = path.getFileName().toString().toLowerCase();
+                if (!fileName.contains(".")) continue;
+                
+                String nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
+                
+                // Check if it's a hitsound file
+                if (isHitsoundFile(nameWithoutExt)) {
+                    String oldValue = hitsoundFileCache.put(nameWithoutExt, path.toAbsolutePath().toString());
+                    if (oldValue != null) {
+                        logger.info("[HITSOUND-RENDERER] Replaced hitsound '{}': {} -> {}", 
+                            nameWithoutExt, oldValue, path);
+                    } else {
+                        logger.info("[HITSOUND-RENDERER] Mapped skin hitsound: {} -> {}", 
+                            nameWithoutExt, path);
                     }
-                });
+                    mappedCount++;
+                }
+            }
+            
+            logger.info("[HITSOUND-RENDERER] Mapped {} hitsounds from skin. Total cache size: {}", 
+                mappedCount, hitsoundFileCache.size());
+            
+            // Log what's missing
+            String[] expectedHitsounds = {
+                "normal-hitnormal", "normal-hitclap", "normal-hitwhistle", "normal-hitfinish",
+                "soft-hitnormal", "soft-hitclap", "soft-hitwhistle", "soft-hitfinish"
+            };
+            
+            for (String expected : expectedHitsounds) {
+                if (!hitsoundFileCache.containsKey(expected)) {
+                    logger.warn("[HITSOUND-RENDERER] Missing hitsound '{}' - will use default or silence", expected);
+                }
+            }
+            
         } catch (IOException e) {
-            logger.error("Failed to map skin hitsounds", e);
+            logger.error("[HITSOUND-RENDERER] Failed to map skin hitsounds", e);
         }
     }
     
@@ -274,11 +327,17 @@ public class ImprovedHitsoundRenderer {
      * Clear all caches.
      */
     public void clearCache() {
+        logger.info("[HITSOUND-RENDERER] Clearing caches - Rendered arrangements: {}, AudioMixer cache size: {}", 
+            renderedArrangementCache.size(), audioMixer.getCacheSize());
+        
         // Clear rendered arrangements to force re-mixing with new skin
         renderedArrangementCache.clear();
         // Don't clear hitsoundFileCache here as it will be rebuilt by mapSkinHitsounds
         audioMixer.clearCache();
-        logger.info("Cleared all hitsound caches for skin change");
+        // Also clear OGG decoder cache to free up disk space
+        OggDecoder.clearCache();
+        
+        logger.info("[HITSOUND-RENDERER] Caches cleared successfully");
     }
     
     /**

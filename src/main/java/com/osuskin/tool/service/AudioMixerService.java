@@ -45,8 +45,9 @@ public class AudioMixerService {
      * Called when the skin changes - reload hitsounds with new skin
      */
     public void onSkinChanged() {
-        logger.info("Skin changed, clearing audio cache");
+        logger.info("[SKIN-CHANGE] Skin changed, clearing audio cache and stopping all playback");
         stop();
+        logger.info("[SKIN-CHANGE] Ready for new skin's hitsounds");
     }
     
     public void playAudioPreview(Media audio) {
@@ -86,8 +87,10 @@ public class AudioMixerService {
     }
     
     public void playHitsound(String hitsoundName) {
+        logger.info("[HITSOUND-PLAY] Request to play: '{}'", hitsoundName);
+        
         if (elementLoader == null) {
-            logger.warn("Cannot play hitsound - element loader not set");
+            logger.error("[HITSOUND-PLAY] Cannot play '{}' - element loader not set", hitsoundName);
             return;
         }
         
@@ -104,10 +107,14 @@ public class AudioMixerService {
                 });
                 
                 player.play();
-                logger.debug("Playing hitsound: {}", hitsoundName);
+                logger.info("[HITSOUND-PLAY] ✓ Playing '{}' (source: {})", 
+                    hitsoundName, sound.getSource());
+            } else {
+                logger.error("[HITSOUND-PLAY] ✗ Failed to load '{}' - sound is null", hitsoundName);
             }
         } catch (Exception e) {
-            logger.error("Failed to play hitsound: {}", hitsoundName, e);
+            logger.error("[HITSOUND-PLAY] Exception playing '{}': {}", 
+                hitsoundName, e.getMessage(), e);
         }
     }
     
@@ -176,7 +183,10 @@ public class AudioMixerService {
     }
     
     public CompletableFuture<Map<String, Media>> loadSkinHitsounds() {
+        logger.info("[HITSOUND-PRELOAD] Starting bulk hitsound preload");
+        
         if (elementLoader == null) {
+            logger.warn("[HITSOUND-PRELOAD] No element loader - returning empty map");
             return CompletableFuture.completedFuture(new HashMap<>());
         }
         
@@ -189,12 +199,20 @@ public class AudioMixerService {
                 "drum-hitnormal", "drum-hitclap", "drum-hitwhistle", "drum-hitfinish"
             };
             
+            logger.info("[HITSOUND-PRELOAD] Loading {} hitsound types", hitsoundNames.length);
+            
             for (String name : hitsoundNames) {
                 Media sound = elementLoader.loadAudio(name);
                 if (sound != null) {
                     hitsounds.put(name, sound);
+                    logger.info("[HITSOUND-PRELOAD] ✓ Loaded: '{}'", name);
+                } else {
+                    logger.warn("[HITSOUND-PRELOAD] ✗ Missing: '{}'", name);
                 }
             }
+            
+            logger.info("[HITSOUND-PRELOAD] Completed - loaded {}/{} hitsounds", 
+                hitsounds.size(), hitsoundNames.length);
             
             return hitsounds;
         });

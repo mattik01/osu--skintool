@@ -424,32 +424,62 @@ public class SkinElementLoader {
      * Load audio element.
      */
     public Media loadAudio(String elementName) {
-        if (elementName == null) return null;
+        if (elementName == null) {
+            logger.warn("[AUDIO] Attempted to load null audio element");
+            return null;
+        }
+        
+        logger.info("[AUDIO] Loading audio element: '{}'", elementName);
         
         // Check cache first
         if (loadedAudio.containsKey(elementName)) {
-            return loadedAudio.get(elementName);
+            Media cached = loadedAudio.get(elementName);
+            logger.info("[AUDIO] Found '{}' in cache (source: {})", 
+                elementName, cached != null ? cached.getSource() : "null");
+            return cached;
         }
         
         // Check manifest
-        if (manifest != null && manifest.containsElement(elementName.toLowerCase())) {
-            String exactPath = manifest.getExactPath(elementName.toLowerCase());
-            try {
-                Media media = new Media(exactPath);
-                if (media.getError() == null) {
-                    loadedAudio.put(elementName, media);
-                    return media;
+        if (manifest != null) {
+            boolean inManifest = manifest.containsElement(elementName.toLowerCase());
+            logger.info("[AUDIO] Element '{}' {} in manifest for skin: {}", 
+                elementName, inManifest ? "EXISTS" : "NOT FOUND", skinDirectory);
+            
+            if (inManifest) {
+                String exactPath = manifest.getExactPath(elementName.toLowerCase());
+                logger.info("[AUDIO] Attempting to load '{}' from skin path: {}", elementName, exactPath);
+                
+                try {
+                    Media media = new Media(exactPath);
+                    if (media.getError() == null) {
+                        loadedAudio.put(elementName, media);
+                        logger.info("[AUDIO] ✓ Successfully loaded '{}' from skin", elementName);
+                        return media;
+                    } else {
+                        logger.error("[AUDIO] Media error loading '{}': {}", 
+                            elementName, media.getError());
+                    }
+                } catch (Exception e) {
+                    logger.error("[AUDIO] Exception loading '{}' from skin: {}", 
+                        elementName, e.getMessage(), e);
                 }
-            } catch (Exception e) {
-                logger.debug("Failed to load audio: {}", elementName, e);
             }
+        } else {
+            logger.warn("[AUDIO] No manifest available for skin: {}", skinDirectory);
         }
         
         // Fallback to default
+        logger.info("[AUDIO] Falling back to default for '{}'", elementName);
         Media defaultAudio = defaultCache.getAudio(elementName);
+        
         if (defaultAudio != null) {
             loadedAudio.put(elementName, defaultAudio);
+            logger.info("[AUDIO] ✓ Using DEFAULT audio for '{}' (source: {})", 
+                elementName, defaultAudio.getSource());
+        } else {
+            logger.error("[AUDIO] ✗ NO DEFAULT FOUND for '{}' - element will be missing!", elementName);
         }
+        
         return defaultAudio;
     }
     
@@ -457,8 +487,18 @@ public class SkinElementLoader {
      * Clear all caches.
      */
     public void clearCache() {
+        logger.info("[CACHE] Clearing all caches - Images: {}, Audio: {}", 
+            loadedImages.size(), loadedAudio.size());
+        
+        // Log what audio was cached before clearing
+        if (!loadedAudio.isEmpty()) {
+            logger.info("[CACHE] Clearing audio cache with elements: {}", loadedAudio.keySet());
+        }
+        
         loadedImages.clear();
         loadedAudio.clear();
+        
+        logger.info("[CACHE] Cache cleared successfully");
     }
     
     /**

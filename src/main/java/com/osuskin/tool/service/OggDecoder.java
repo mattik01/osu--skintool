@@ -81,12 +81,10 @@ public class OggDecoder {
             logger.debug("VLC conversion failed", e);
         }
         
-        // Method 3: Create a dummy WAV file with silence (fallback)
-        // This ensures the app doesn't crash, just plays silence for OGG files
-        logger.warn("No OGG decoder available, creating silent placeholder for: {}", oggFile);
-        createSilentWav(wavPath, 100); // 100ms of silence
-        conversionCache.put(oggFile, wavPath);
-        return wavPath.toFile();
+        // Method 3: Return null to trigger fallback to default hitsounds
+        // Don't create silent placeholders - let the system use defaults instead
+        logger.warn("[OGG-DECODER] No OGG decoder available for: {} - will fall back to default hitsound", oggFile);
+        return null;
     }
     
     /**
@@ -116,9 +114,10 @@ public class OggDecoder {
             ProcessBuilder pb = new ProcessBuilder(
                 ffmpegPath,
                 "-i", oggPath.toString(),
+                "-f", "wav",
+                "-acodec", "pcm_s16le",
                 "-ar", "44100",
                 "-ac", "2",
-                "-sample_fmt", "s16",
                 "-y",
                 wavPath.toString()
             );
@@ -162,9 +161,36 @@ public class OggDecoder {
             
             int exitCode = process.exitValue();
             
-            if (exitCode == 0 && Files.exists(wavPath)) {
-                logger.info("Converted OGG to WAV using FFmpeg: {}", oggPath.getFileName());
+            // Check if file was created regardless of exit code
+            // FFmpeg on Windows sometimes returns non-zero codes even on success
+            if (Files.exists(wavPath)) {
+                long fileSize = Files.size(wavPath);
+                logger.info("[OGG-DECODER] Converted OGG to WAV using FFmpeg: {} -> {} (size: {} bytes)", 
+                    oggPath.getFileName(), wavPath.getFileName(), fileSize);
+                
+                // Check if the file is valid (WAV header is 44 bytes minimum)
+                // Files that are exactly 78-80 bytes are likely intentionally silent (just WAV header + minimal data)
+                // These should be kept as they represent intentional silence in the skin
+                if (fileSize < 78) {
+                    logger.warn("[OGG-DECODER] Converted WAV file is too small ({} bytes), likely corrupted: {}", 
+                        fileSize, wavPath.getFileName());
+                    Files.deleteIfExists(wavPath);
+                    return false;
+                } else if (fileSize <= 100) {
+                    // Small file but valid - likely an intentionally silent hitsound
+                    logger.info("[OGG-DECODER] Small WAV file detected ({} bytes) - intentionally silent hitsound: {}", 
+                        fileSize, wavPath.getFileName());
+                    // Keep the file - it's valid silence
+                    return true;
+                }
+                // Log warning if exit code was non-zero but file was created
+                if (exitCode != 0) {
+                    logger.debug("[OGG-DECODER] FFmpeg returned non-zero exit code {} but file was created successfully", exitCode);
+                }
                 return true;
+            } else {
+                logger.warn("[OGG-DECODER] FFmpeg conversion failed - exit code: {}, file exists: {}", 
+                    exitCode, Files.exists(wavPath));
             }
         } catch (Exception e) {
             // FFmpeg not available or conversion failed

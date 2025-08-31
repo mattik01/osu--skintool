@@ -182,26 +182,34 @@ public class AudioMixer {
         
         // If still failed and it's an OGG file, try OGG decoder
         if (sample == null && audioFile.toLowerCase().endsWith(".ogg")) {
+            logger.info("[AUDIO-MIXER] Attempting OGG conversion for: {}", audioFile);
             try {
                 File convertedWav = OggDecoder.convertOggToWav(audioFile);
                 if (convertedWav != null && convertedWav.exists()) {
+                    logger.info("[AUDIO-MIXER] OGG conversion successful, loading WAV: {}", convertedWav.getAbsolutePath());
                     sample = loadAudioSample(convertedWav.getAbsolutePath());
+                } else {
+                    logger.warn("[AUDIO-MIXER] OGG conversion returned null/missing file for: {} - will use default", audioFile);
                 }
-            } catch (IOException e) {
-                logger.error("Failed to convert OGG file: {}", audioFile, e);
+            } catch (Exception e) {
+                logger.error("[AUDIO-MIXER] Failed to convert OGG file: {} - will use default", audioFile, e);
             }
         }
         
-        // If all loading attempts failed, use default or silence
+        // If all loading attempts failed, use default
         if (sample == null) {
             String fileName = file.getName().toLowerCase();
+            logger.info("[AUDIO-MIXER] Loading failed for: {} - attempting to load default hitsound", audioFile);
             AudioSample defaultSample = loadDefaultHitsound(fileName);
             if (defaultSample != null) {
-                logger.debug("Using default hitsound for problematic file: {}", audioFile);
+                logger.info("[AUDIO-MIXER] ✓ Using DEFAULT hitsound instead of: {}", audioFile);
+                sampleCache.put(audioFile, defaultSample); // Cache the default for this file
                 return defaultSample;
             }
-            logger.warn("All loading attempts failed for: {}. Using silence.", audioFile);
-            return createSilentSample(100);
+            logger.error("[AUDIO-MIXER] ✗ No default available for: {} - using silence as last resort", audioFile);
+            AudioSample silentSample = createSilentSample(100);
+            sampleCache.put(audioFile, silentSample); // Cache to avoid repeated attempts
+            return silentSample;
         }
         
         sampleCache.put(audioFile, sample);
@@ -574,6 +582,15 @@ public class AudioMixer {
      */
     public void clearCache() {
         sampleCache.clear();
+        defaultHitsoundCache.clear();
+        logger.info("[AUDIO-MIXER] Cleared all caches - sample cache and default hitsound cache");
         // Keep default cache as it's small and reusable
+    }
+    
+    /**
+     * Get the size of the sample cache.
+     */
+    public int getCacheSize() {
+        return sampleCache.size();
     }
 }

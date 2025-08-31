@@ -26,13 +26,17 @@
     <logger name="com.osuskin.tool" level="WARN"/>
     
     <!-- Critical components - only errors and warnings -->
-    <logger name="com.osuskin.tool.controller.MainController" level="INFO"/>
-    <logger name="com.osuskin.tool.service.SkinElementLoader" level="ERROR"/>
+    <logger name="com.osuskin.tool.controller.MainController" level="WARN"/>
+    <logger name="com.osuskin.tool.service.SkinElementLoader" level="WARN"/>
     <logger name="com.osuskin.tool.service.SkinScannerService" level="WARN"/>
-    <logger name="com.osuskin.tool.service.HitsoundGeneratorService" level="ERROR"/>
+    <logger name="com.osuskin.tool.service.HitsoundGeneratorService" level="WARN"/>
+    <logger name="com.osuskin.tool.service.ImprovedHitsoundRenderer" level="WARN"/>
+    <logger name="com.osuskin.tool.service.ArrangementPlayer" level="WARN"/>
+    <logger name="com.osuskin.tool.service.AudioMixer" level="WARN"/>
+    <logger name="com.osuskin.tool.service.OggDecoder" level="WARN"/>
     <logger name="com.osuskin.tool.view.SimpleGameplayRenderer" level="ERROR"/>
     <logger name="com.osuskin.tool.view.gameplay" level="ERROR"/>
-    <logger name="com.osuskin.tool.service.AudioMixerService" level="ERROR"/>
+    <logger name="com.osuskin.tool.service.AudioMixerService" level="WARN"/>
     
     <!-- Performance-critical components - show important events only -->
     <logger name="com.osuskin.tool.service.AsyncPreviewLoader" level="WARN"/>
@@ -41,13 +45,13 @@
     <logger name="com.osuskin.tool.service.SkinIndexCache" level="WARN"/>
     
     <!-- Startup/shutdown logging -->
-    <logger name="com.osuskin.tool.OsuSkinToolApplication" level="INFO"/>
+    <logger name="com.osuskin.tool.OsuSkinToolApplication" level="WARN"/>
     
     <!-- Performance monitoring - always show when enabled -->
-    <logger name="com.osuskin.tool.util.PerformanceMonitor" level="INFO"/>
+    <logger name="com.osuskin.tool.util.PerformanceMonitor" level="WARN"/>
     
     <!-- Root logger -->
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </root>

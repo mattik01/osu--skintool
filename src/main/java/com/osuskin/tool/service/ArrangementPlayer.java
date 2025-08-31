@@ -109,17 +109,23 @@ public class ArrangementPlayer {
                 Media backgroundAudio = new Media(getClass().getResource(audioPath).toExternalForm());
                 
                 // Render hitsounds into pre-mixed audio
+                logger.info("[ARRANGEMENT] Rendering hitsounds for arrangement: {} (reload only: {})", 
+                    arrangementName, reloadHitsoundsOnly);
+                    
                 renderer.renderArrangement(arrangement).thenAccept(mixedAudio -> {
+                    logger.info("[ARRANGEMENT] Hitsounds rendered successfully for: {}", arrangementName);
                     Platform.runLater(() -> {
                         if (reloadHitsoundsOnly && isPlaying) {
+                            logger.info("[ARRANGEMENT] Reloading hitsounds only for: {}", arrangementName);
                             // Just reload hitsounds and restart from beginning
                             reloadHitsoundsAndRestart(backgroundAudio, mixedAudio);
                         } else {
+                            logger.info("[ARRANGEMENT] Playing full arrangement: {}", arrangementName);
                             playArrangementWithMixedAudio(backgroundAudio, mixedAudio);
                         }
                     });
                 }).exceptionally(ex -> {
-                    logger.error("Failed to render arrangement", ex);
+                    logger.error("[ARRANGEMENT] Failed to render arrangement: {}", arrangementName, ex);
                     return null;
                 });
                 
