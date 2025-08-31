@@ -1,0 +1,1006 @@
+{
+  "beatmap_folder": "456986 Komiya Mao - (can you) understand me",
+  "difficulty_name": "Komiya Mao - (can you) understand me (Sotarks) [uhh]",
+  "start_time": 75083,
+  "end_time": 85083,
+  "hit_objects": [
+    {
+      "time": 108,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0,
+          "duration": 324
+        },
+        {
+          "sound": "slidertick",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 317
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "drum",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 324
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 1,
+      "volume": 72
+    },
+    {
+      "time": 594,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0,
+          "duration": 162
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 162
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 1,
+      "volume": 72
+    },
+    {
+      "time": 918,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 1081,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0,
+          "duration": 162
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 162
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 162
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 1,
+      "volume": 72
+    },
+    {
+      "time": 1405,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 1567,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 1729,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 1891,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0,
+          "duration": 162
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 162
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 1,
+      "volume": 72
+    },
+    {
+      "time": 2216,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 2378,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "whistle",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 2540,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 2702,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 2864,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0,
+          "duration": 162
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 162
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 1,
+      "volume": 72
+    },
+    {
+      "time": 3189,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "drum",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "drum",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 3513,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 3675,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "whistle",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 3837,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 4000,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 4162,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 4324,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 4486,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "drum",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "drum",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 4810,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0,
+          "duration": 324
+        },
+        {
+          "sound": "slidertick",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 317
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 324
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 324
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 1,
+      "volume": 72
+    },
+    {
+      "time": 5297,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0,
+          "duration": 324
+        },
+        {
+          "sound": "slidertick",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 317
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "drum",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 324
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 1,
+      "volume": 72
+    },
+    {
+      "time": 5783,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0,
+          "duration": 162
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 162
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 1,
+      "volume": 72
+    },
+    {
+      "time": 6108,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 6270,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0,
+          "duration": 162
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 162
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 162
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 1,
+      "volume": 72
+    },
+    {
+      "time": 6594,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 6756,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 6918,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 7081,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 0,
+          "duration": 162
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 1,
+          "volume": 72,
+          "time_offset": 162
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 1,
+      "volume": 72
+    },
+    {
+      "time": 7405,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 7567,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 7729,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 7891,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 8054,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "whistle",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 8216,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 8378,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 8540,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 8702,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 8864,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 9027,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 9189,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 9351,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 9513,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 9675,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        },
+        {
+          "sound": "whistle",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    },
+    {
+      "time": 9837,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 72,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 72
+    }
+  ],
+  "unique_sounds": [
+    "slidertick",
+    "clap",
+    "whistle",
+    "hitnormal",
+    "sliderslide"
+  ],
+  "samplesets_used": [
+    "normal",
+    "soft",
+    "drum"
+  ],
+  "variety_score": 129,
+  "audio_file": "beatmaps/456986 Komiya Mao - (can you) understand me/uhh.mp3"
+}

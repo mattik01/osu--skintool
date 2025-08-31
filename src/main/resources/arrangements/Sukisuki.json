@@ -1,0 +1,1294 @@
+{
+  "beatmap_folder": "484532 Kano - Sukisuki Zecchoushou",
+  "difficulty_name": "Kano - Sukisuki Zecchoushou (Loreley) [Collab Insane]",
+  "start_time": 170458,
+  "end_time": 180458,
+  "hit_objects": [
+    {
+      "time": 128,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 64
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 64
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 384,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 64
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 64
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 641,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 64
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 64
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 897,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 1025,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 1153,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 1282,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 9,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 9,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 256
+        },
+        {
+          "sound": "slidertick",
+          "sampleset": "soft",
+          "sample_index": 9,
+          "volume": 60,
+          "time_offset": 222
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 9,
+          "volume": 60,
+          "time_offset": 256
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 9,
+          "volume": 60,
+          "time_offset": 256
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 9,
+      "volume": 60
+    },
+    {
+      "time": 1666,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 1794,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 2051,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 2179,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 2307,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 2564,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 256
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 256
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 2948,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 3076,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 3333,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 3589,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 3846,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 4102,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 4358,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 4615,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 4743,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 4871,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 256
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 256
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 256
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 5256,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 5384,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 256
+        },
+        {
+          "sound": "slidertick",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 222
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 256
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 256
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 5897,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 256
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 256
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 256
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 6282,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 6410,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 6666,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 6923,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 7051,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 7179,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 7307,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 7435,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 7692,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 7820,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 7948,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 256
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        },
+        {
+          "sound": "finish",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 2,
+          "volume": 60,
+          "time_offset": 256
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 60
+    },
+    {
+      "time": 8333,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 3,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 3,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 64
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 3,
+          "volume": 60,
+          "time_offset": 64
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 3,
+      "volume": 60
+    },
+    {
+      "time": 8589,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 3,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 3,
+          "volume": 60,
+          "time_offset": 0,
+          "duration": 64
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 3,
+          "volume": 60,
+          "time_offset": 64
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 3,
+      "volume": 60
+    },
+    {
+      "time": 8846,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 10,
+          "volume": 75,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 10,
+          "volume": 75,
+          "time_offset": 0,
+          "duration": 64
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 10,
+          "volume": 75,
+          "time_offset": 64
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 10,
+      "volume": 75
+    },
+    {
+      "time": 9102,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 9230,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 9358,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "soft",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 9487,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 70,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 70,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 70,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 70
+    },
+    {
+      "time": 9743,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 70,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 70,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 70,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 70
+    },
+    {
+      "time": 9999,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 70,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "soft",
+          "sample_index": 2,
+          "volume": 70,
+          "time_offset": 0,
+          "duration": 128
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 2,
+          "volume": 70,
+          "time_offset": 128
+        }
+      ],
+      "sampleset": "soft",
+      "additions": "soft",
+      "sample_index": 2,
+      "volume": 70
+    }
+  ],
+  "unique_sounds": [
+    "slidertick",
+    "clap",
+    "hitnormal",
+    "finish",
+    "sliderslide"
+  ],
+  "samplesets_used": [
+    "normal",
+    "soft"
+  ],
+  "variety_score": 175,
+  "audio_file": "beatmaps/484532 Kano - Sukisuki Zecchoushou/audio200.mp3"
+}

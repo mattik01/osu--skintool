@@ -49,7 +49,11 @@
       "Bash(echo:*)",
       "Bash(powershell:*)",
       "Bash(del \"C:\\Users\\glaes\\Desktop\\github\\osu!-skintool\\src\\main\\java\\com\\osuskin\\tool\\service\\AsyncSkinLoader.java\")",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(choco install:*)",
+      "Bash(where:*)"
     ],
     "deny": [],
     "additionalDirectories": [

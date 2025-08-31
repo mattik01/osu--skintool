@@ -20,8 +20,8 @@ public class AudioMixerService {
     private boolean isPlaying = false;
     private boolean isLooping = true;
     
-    private double audioVolume = 0.1;  // Audio volume (0-1, but maxes at 20% in UI)
-    private double hitsoundVolume = 0.8;  // Hitsound volume (0-1, full range)
+    private double audioVolume = 0.5;  // Audio volume (0-1)
+    private double hitsoundVolume = 0.6;  // Balanced hitsound volume for audible but controlled layering
     
     public AudioMixerService() {
         logger.info("AudioMixerService initialized");
@@ -149,15 +149,15 @@ public class AudioMixerService {
     }
     
     public void setAudioVolume(double volume) {
-        // Audio volume maxes out at 0.2 (20%)
-        this.audioVolume = Math.max(0.0, Math.min(0.2, volume * 0.2));
+        // Audio volume (0-100%)
+        this.audioVolume = Math.max(0.0, Math.min(1.0, volume));
         if (audioPlayer != null) {
             audioPlayer.setVolume(audioVolume);
         }
     }
     
     public void setHitsoundVolume(double volume) {
-        // Hitsound volume (0-100%), no limiter applied
+        // Hitsound volume (0-100%)
         this.hitsoundVolume = Math.max(0.0, Math.min(1.0, volume));
         
         for (MediaPlayer player : activeHitsoundPlayers) {

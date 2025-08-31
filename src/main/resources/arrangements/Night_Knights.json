@@ -1,0 +1,1427 @@
+{
+  "beatmap_folder": "352570 beatMARIO - Night of Knights",
+  "difficulty_name": "beatMARIO - Night of Knights (alacat) [The World]",
+  "start_time": 140416,
+  "end_time": 150416,
+  "hit_objects": [
+    {
+      "time": 166,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 333,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 416,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 499,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 583,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 666,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "whistle",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 833,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "whistle",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 999,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 1166,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "whistle",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 1333,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 1499,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 1666,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 1749,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 1833,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 1999,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 2166,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 2333,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 2416,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 2499,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 2583,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 2666,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 2833,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 2999,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 3083,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 3166,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 3249,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 3333,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "whistle",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 3499,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "whistle",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 3666,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 3833,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "whistle",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 3999,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "finish",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 4166,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 4333,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 4416,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 4499,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 4666,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 4833,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 4999,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 5083,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 5166,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 5249,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 5333,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "finish",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 5499,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 5666,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 5749,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 5833,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 5916,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 5999,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "whistle",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 6166,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "sliderslide",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0,
+          "duration": 166
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 55
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 110
+        },
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 165
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 165
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 6499,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "whistle",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 6666,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "finish",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 6833,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 6916,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 6999,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 7166,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 60,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 60
+    },
+    {
+      "time": 7333,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 70,
+          "time_offset": 0
+        },
+        {
+          "sound": "finish",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 70,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 70
+    },
+    {
+      "time": 7499,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 70,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 70
+    },
+    {
+      "time": 7583,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 70,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 70
+    },
+    {
+      "time": 7666,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 70,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 70,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 70
+    },
+    {
+      "time": 7833,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 70,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 70
+    },
+    {
+      "time": 7999,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "finish",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 8166,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 8249,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 8333,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 8499,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 80,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 80
+    },
+    {
+      "time": 8666,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 90,
+          "time_offset": 0
+        },
+        {
+          "sound": "finish",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 90,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 90
+    },
+    {
+      "time": 8999,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 90,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 90,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 90
+    },
+    {
+      "time": 9333,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 90,
+          "time_offset": 0
+        },
+        {
+          "sound": "finish",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 90,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 90
+    },
+    {
+      "time": 9499,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 90,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 90
+    },
+    {
+      "time": 9666,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 90,
+          "time_offset": 0
+        },
+        {
+          "sound": "clap",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 90,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 90
+    },
+    {
+      "time": 9749,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 90,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 90
+    },
+    {
+      "time": 9833,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 90,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 90
+    },
+    {
+      "time": 9999,
+      "sounds": [
+        {
+          "sound": "hitnormal",
+          "sampleset": "normal",
+          "sample_index": 0,
+          "volume": 90,
+          "time_offset": 0
+        }
+      ],
+      "sampleset": "normal",
+      "additions": "normal",
+      "sample_index": 0,
+      "volume": 90
+    }
+  ],
+  "unique_sounds": [
+    "clap",
+    "finish",
+    "whistle",
+    "hitnormal",
+    "sliderslide"
+  ],
+  "samplesets_used": [
+    "normal"
+  ],
+  "variety_score": 117,
+  "audio_file": "beatmaps/352570 beatMARIO - Night of Knights/no.mp3"
+}

@@ -9,6 +9,7 @@ module osu.skintool {
     requires org.slf4j;
     requires ch.qos.logback.classic;
     requires org.apache.commons.io;
+    requires java.desktop;  // For javax.sound.sampled
     
     opens com.osuskin.tool to javafx.fxml;
     opens com.osuskin.tool.controller to javafx.fxml;

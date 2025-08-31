@@ -111,6 +111,9 @@ public class OsuSkinToolApplication extends Application {
             
         } catch (Exception e) {
             logger.error("Error during application shutdown", e);
+        } finally {
+            // Force JVM exit to ensure all non-daemon threads are terminated
+            System.exit(0);
         }
     }
     

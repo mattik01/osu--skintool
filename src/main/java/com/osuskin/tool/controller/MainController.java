@@ -10,6 +10,8 @@ import com.osuskin.tool.service.SkinElementLoader;
 import com.osuskin.tool.service.ManifestCache;
 import com.osuskin.tool.service.AudioMixerService;
 import com.osuskin.tool.service.AsyncPreviewLoader;
+import com.osuskin.tool.service.ImprovedHitsoundRenderer;
+import com.osuskin.tool.service.ArrangementPlayer;
 import com.osuskin.tool.view.gameplay.GameplayRenderer;
 import com.osuskin.tool.util.ConfigurationManager;
 import com.osuskin.tool.util.OsuPathDetector;
@@ -140,6 +142,10 @@ public class MainController implements Initializable {
     private AsyncPreviewLoader asyncPreviewLoader;
     private Task<AsyncPreviewLoader.PreviewLoadResult> currentPreviewTask;
     
+    // Arrangement system
+    private ImprovedHitsoundRenderer hitsoundRenderer;
+    private ArrangementPlayer arrangementPlayer;
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         
@@ -194,12 +200,16 @@ public class MainController implements Initializable {
         // Initialize skin container service
         skinContainerService = new SkinContainerService();
         
+        // Initialize async preview loader
+        asyncPreviewLoader = new AsyncPreviewLoader();
+        
+        // Initialize arrangement system BEFORE audio mixer
+        hitsoundRenderer = new ImprovedHitsoundRenderer();
+        arrangementPlayer = new ArrangementPlayer(hitsoundRenderer);
+        
         // Initialize audio mixer service
         audioMixerService = new AudioMixerService();
         setupAudioMixerControls();
-        
-        // Initialize async preview loader
-        asyncPreviewLoader = new AsyncPreviewLoader();
         
         // Pre-initialize renderers at startup for performance
         preInitializeRenderers();
@@ -337,9 +347,37 @@ public class MainController implements Initializable {
             lazyLoadingService.cancelCurrentLoading();
         }
         
+        // Reset audio system when skin changes
+        resetAudioSystemForNewSkin();
+        
         // Simply display the preview - no need for multiple loading tasks
         displaySkinPreview(selectedSkin);
         updateSelectionUI();
+    }
+    
+    private void resetAudioSystemForNewSkin() {
+        // Stop any current playback
+        if (arrangementPlayer != null) {
+            arrangementPlayer.stop();
+        }
+        if (audioMixerService != null) {
+            audioMixerService.stop();
+        }
+        
+        // Reset play button
+        if (btnPlayPause != null) {
+            btnPlayPause.setText("▶");
+        }
+        
+        // Clear status
+        if (lblNowPlaying != null && sampleSelector != null && sampleSelector.getValue() != null) {
+            lblNowPlaying.setText("Ready: " + sampleSelector.getValue());
+        }
+        
+        // Clear hitsound cache
+        if (hitsoundRenderer != null) {
+            hitsoundRenderer.clearCache();
+        }
     }
     
     @FXML
@@ -449,6 +487,26 @@ public class MainController implements Initializable {
         // Clean up audio mixer service
         if (audioMixerService != null) {
             audioMixerService.stop();
+        }
+        
+        // Shutdown arrangement player if exists
+        if (arrangementPlayer != null) {
+            try {
+                arrangementPlayer.shutdown();
+                logger.info("ArrangementPlayer shutdown completed");
+            } catch (Exception e) {
+                logger.error("Error shutting down ArrangementPlayer", e);
+            }
+        }
+        
+        // Shutdown hitsound renderer if exists  
+        if (hitsoundRenderer != null) {
+            try {
+                hitsoundRenderer.shutdown();
+                logger.info("HitsoundRenderer shutdown completed");
+            } catch (Exception e) {
+                logger.error("Error shutting down HitsoundRenderer", e);
+            }
         }
         
         // Cancel any preview loading tasks
@@ -589,29 +647,55 @@ public class MainController implements Initializable {
     }
     
     private void setupAudioMixerControls() {
-        // Sample selector not used in simplified version
-        if (sampleSelector != null) {
-            sampleSelector.setVisible(false);
-            sampleSelector.setManaged(false);
+        // Setup arrangement selector if not already done
+        if (sampleSelector != null && arrangementPlayer != null) {
+            setupArrangementSelector();
         }
         
-        // Setup audio volume slider (0-20% actual volume)
+        // Setup audio volume slider (0-100%)
         if (audioVolumeSlider != null) {
             audioVolumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
                 double sliderValue = newValue.doubleValue();
-                // Display shows 0-20% range based on slider position
-                // Pass normalized value (0-1) to service
+                // Pass normalized value (0-1) to services
                 audioMixerService.setAudioVolume(sliderValue / 100.0);
+                arrangementPlayer.setAudioVolume(sliderValue / 100.0);
             });
         }
         
-        // Setup hitsound volume slider (displays 0-1000%, actual 0-100%)
+        // Setup hitsound volume slider (0-100%)
         if (hitsoundVolumeSlider != null) {
             hitsoundVolumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
                 double sliderValue = newValue.doubleValue();
-                // Display as 0-1000% to show the boost level
-                // Pass normalized value (0-1) to service
+                // Pass normalized value (0-1) to services
                 audioMixerService.setHitsoundVolume(sliderValue / 100.0);
+                arrangementPlayer.setHitsoundVolume(sliderValue / 100.0);
+            });
+        }
+    }
+    
+    private void setupArrangementSelector() {
+        if (sampleSelector != null) {
+            // Populate with available arrangements
+            List<String> arrangements = arrangementPlayer.getAvailableArrangements();
+            sampleSelector.setItems(FXCollections.observableArrayList(arrangements));
+            if (!arrangements.isEmpty()) {
+                sampleSelector.setValue(arrangements.get(0));
+            }
+            sampleSelector.setVisible(true);
+            sampleSelector.setManaged(true);
+            
+            // Add listener to stop and reset when selection changes
+            sampleSelector.valueProperty().addListener((observable, oldValue, newValue) -> {
+                if (oldValue != null && !oldValue.equals(newValue)) {
+                    // Stop current playback when changing selection
+                    arrangementPlayer.stop();
+                    if (btnPlayPause != null) {
+                        btnPlayPause.setText("▶");
+                    }
+                    if (lblNowPlaying != null) {
+                        lblNowPlaying.setText("Ready: " + newValue);
+                    }
+                }
             });
         }
     }
@@ -624,16 +708,64 @@ public class MainController implements Initializable {
     private void onTogglePlayPause() {
         logger.info("Play button clicked");
         
-        // If already playing, just toggle
-        if (audioMixerService.isPlaying()) {
-            audioMixerService.togglePlayPause();
+        // If already playing, stop and reset
+        if (arrangementPlayer.isPlaying()) {
+            arrangementPlayer.stop();
             if (btnPlayPause != null) {
                 btnPlayPause.setText("▶");
+            }
+            if (lblNowPlaying != null && sampleSelector != null) {
+                lblNowPlaying.setText("Stopped: " + sampleSelector.getValue());
             }
             return;
         }
         
-        // Try to load audio preview from skin
+        // Play selected arrangement
+        if (sampleSelector != null && sampleSelector.getValue() != null) {
+            String selectedArrangement = sampleSelector.getValue();
+            logger.info("Playing arrangement: {}", selectedArrangement);
+            
+            // Update button and label
+            if (btnPlayPause != null) {
+                btnPlayPause.setText("⏸");
+            }
+            if (lblNowPlaying != null) {
+                lblNowPlaying.setText("Loading: " + selectedArrangement);
+            }
+            
+            // Set element loader for hitsound renderer
+            if (elementLoader != null) {
+                hitsoundRenderer.setElementLoader(elementLoader);
+                // Set skin path if available
+                Skin selectedSkin = listSkins.getSelectionModel().getSelectedItem();
+                if (selectedSkin != null && selectedSkin.getDirectoryPath() != null) {
+                    hitsoundRenderer.setSkinPath(Paths.get(selectedSkin.getDirectoryPath()));
+                }
+            }
+            
+            // Play the arrangement
+            arrangementPlayer.playArrangement(selectedArrangement)
+                .thenRun(() -> Platform.runLater(() -> {
+                    if (lblNowPlaying != null) {
+                        lblNowPlaying.setText("Playing: " + selectedArrangement);
+                    }
+                }))
+                .exceptionally(ex -> {
+                    logger.error("Failed to play arrangement", ex);
+                    Platform.runLater(() -> {
+                        if (lblNowPlaying != null) {
+                            lblNowPlaying.setText("Error loading arrangement");
+                        }
+                        if (btnPlayPause != null) {
+                            btnPlayPause.setText("▶");
+                        }
+                    });
+                    return null;
+                });
+            return;
+        }
+        
+        // Fallback to old audio preview behavior if no arrangement selected
         if (elementLoader != null) {
             // Try different audio files in order of preference
             String[] audioFiles = {"welcome", "seeya", "menu-hit", "menuclick"};
@@ -878,8 +1010,10 @@ public class MainController implements Initializable {
                 // Update element loader with preloaded elements
                 elementLoader = result.elementLoader;
                 
-                // Set element loader for audio mixer service
+                // Set element loader for audio mixer service and hitsound renderer
                 audioMixerService.setElementLoader(elementLoader);
+                hitsoundRenderer.setElementLoader(elementLoader);
+                hitsoundRenderer.setSkinPath(Paths.get(skin.getDirectoryPath()));
                 
                 // Keep loading indicator visible and update message
                 if (previewLoadingLabel != null) {
@@ -1028,6 +1162,10 @@ public class MainController implements Initializable {
     @FXML
     private void onStopAudio() {
         stopCurrentAudio();
+        arrangementPlayer.stop();
+        if (btnPlayPause != null) {
+            btnPlayPause.setText("▶");
+        }
         lblNowPlaying.setText("Nothing playing");
     }
     
