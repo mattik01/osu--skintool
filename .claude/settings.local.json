@@ -53,7 +53,8 @@
       "Bash(git branch:*)",
       "Bash(git push:*)",
       "Bash(choco install:*)",
-      "Bash(where:*)"
+      "Bash(where:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "additionalDirectories": [
