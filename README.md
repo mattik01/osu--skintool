@@ -1,5 +1,10 @@
 # osu! Skin Tool
 
+> ## 🚧 WORK IN PROGRESS — NOT COMPLETED 🚧
+> Actively developed and **not finished**. Features and internals may change or
+> break. This is a project I intend to finish and keep **open source** (no
+> profit/monetization). Use at your own risk for now.
+
 A high-performance JavaFX application for managing and previewing osu! skins with real-time gameplay simulation.
 
 ## Features
